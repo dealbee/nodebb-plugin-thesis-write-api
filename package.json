@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/julianlam/nodebb-plugin-thesis-write-api"
+    "url": "https://github.com/dealbee/nodebb-plugin-thesis-write-api"
   },
   "keywords": [
     "nodebb",
@@ -21,9 +21,9 @@
   "author": "Julian Lam (edited by lamcuongdat)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/julianlam/nodebb-plugin-thesis-write-api/issues"
+    "url": "https://github.com/dealbee/nodebb-plugin-thesis-write-api/issues"
   },
-  "homepage": "https://github.com/julianlam/nodebb-plugin-thesis-write-api",
+  "homepage": "https://github.com/dealbee/nodebb-plugin-thesis-write-api",
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
