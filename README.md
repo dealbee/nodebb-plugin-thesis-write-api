@@ -44,7 +44,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
         "message": "You are not authorised to make this call",
         "params": {}
     }
-## `api/v1` Endpoints
+## `api/thesis` Endpoints
 
 * `/api/v1`
     * `/users`
