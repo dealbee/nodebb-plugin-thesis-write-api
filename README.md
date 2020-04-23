@@ -46,7 +46,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
     }
 ## `api/thesis` Endpoints
 
-* `/api/v1`
+* `/api/thesis`
     * `/users`
         * `POST /`
             * Tạo người dùng mới
