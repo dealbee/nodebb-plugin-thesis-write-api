@@ -1,0 +1,21 @@
+{
+	"id": "nodebb-plugin-write-api",
+	"name": "NodeBB Write-Enabled API",
+	"description": "A RESTful JSON-speaking API allowing you to write things to NodeBB",
+	"url": "https://github.com/julianlam/nodebb-plugin-write-api",
+	"library": "./index.js",
+	"templates": "templates",
+	"hooks": [
+		{ "hook": "static:app.load", "method": "init" },
+		{ "hook": "filter:admin.header.build", "method": "addMenuItem" },
+		{ "hook": "response:middleware.authenticate", "method": "authenticate"},
+		{ "hook": "filter:router.page", "method": "associateUser" },
+		{ "hook": "action:settings.set", "method": "reloadSettings" }
+	],
+	"less": [
+		"./less/style.less"
+	],
+	"acpScripts": [
+		"public/js/admin.js"
+	]
+}

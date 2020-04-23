@@ -1,0 +1,58 @@
+{
+  "name": "nodebb-plugin-thesis-write-api",
+  "version": "5.7.2",
+  "description": "Write-enabled API for NodeBB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/julianlam/nodebb-plugin-thesis-write-api"
+  },
+  "keywords": [
+    "nodebb",
+    "plugin",
+    "write",
+    "API",
+    "REST",
+    "JSON"
+  ],
+  "author": "Julian Lam (edited by lamcuongdat)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/julianlam/nodebb-plugin-thesis-write-api/issues"
+  },
+  "homepage": "https://github.com/julianlam/nodebb-plugin-thesis-write-api",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "dependencies": {
+    "async": "^2",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "markdown-it": "^8.4.1",
+    "passport-http-bearer": "^1.0.1"
+  },
+  "nbbpm": {
+    "compatibility": "^1.13"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-angular": "^8.3.4",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "husky": "^4.2.5",
+    "lint-staged": "^10.1.3"
+  }
+}
