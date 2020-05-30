@@ -14,7 +14,7 @@ var	passport = module.parent.require('passport'),
 API.init = function (data, callback) {
 	// API Versions
 	var routes = require('./routes')(data.middleware);
-	data.router.use('/api/thesis', routes.v1);
+	data.router.use('/api/dealbee', routes.v1);
 	data.router.use('/api/v2', routes.v2);
 
 	// Set up HTTP bearer authentication via Passport

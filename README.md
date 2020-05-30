@@ -44,9 +44,9 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
         "message": "You are not authorised to make this call",
         "params": {}
     }
-## `api/thesis` Endpoints
+## `api/dealbee` Endpoints
 
-* `/api/thesis`
+* `/api/dealbee`
     * `/users`
         * `POST /`
             * Tạo người dùng mới
@@ -126,6 +126,15 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * Rời group
             * **Accepts**: No parameters
     * `/topics`
+        * `GET /`
+            * Lấy thông tin tất cả topic
+            * **Requires**: `_uid` uid của người dùng
+            * **Accepts**: `sorted` phương thức sort (bao gồm: TIME_ASC (default), TIME_DESC, POSTCOUNT_ASC, POSTCOUNT_DESC, VIEW_ASC, VIEW_DESC, UPVOTE_ASC, UPVOTE_DESC), `cid` id của chủ đề cần lọc
+            * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
+        * `GET /pin`
+            * Lấy thông tin tất cả topic đang được pin
+            * **Requires**: `_uid` uid của người dùng
+            * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON, có thêm trường đặc biệt là positionKey (pindealbee:{typeID}:{positionID})
         * `POST /`
             * Tạo topic
             * **Requires**: `cid`, `title`, `content`

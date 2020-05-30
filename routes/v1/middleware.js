@@ -13,7 +13,7 @@ var passport = require.main.require('passport'),
 	Middleware = {};
 
 Middleware.requireUser = function(req, res, next) {
-	var writeApi = require.main.require('nodebb-plugin-write-api');
+	var writeApi = require.main.require('nodebb-plugin-thesis-write-api');
 	var routeMatch;
 
 	if (req.headers.hasOwnProperty('authorization')) {
