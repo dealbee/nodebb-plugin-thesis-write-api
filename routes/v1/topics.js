@@ -7,10 +7,16 @@ var Topics = require.main.require('./src/topics'),
 	errorHandler = require('../../lib/errorHandler'),
 	utils = require('./utils'),
 	winston = require.main.require('winston'),
-	db = require.main.require('./src/database');
+	db = require.main.require('./src/database'),
+	moment = require('../../lib/moment')
 module.exports = function (middleware) {
 	var app = require('express').Router();
 
+	app.route('/test')
+		.get(function (req, res) {
+			console.log(req);
+			res.status(200).send({ ok: "ok" });
+		})
 	app.route('/')
 		.post(apiMiddleware.requireUser, function (req, res) {
 			if (!utils.checkRequired(['cid', 'title', 'content'], req, res)) {
@@ -30,9 +36,10 @@ module.exports = function (middleware) {
 				return errorHandler.handle(err, res, data);
 			});
 		})
-		.get(apiMiddleware.requireUser, async function (req, res) {
+		.get(apiMiddleware.ignoreUid,apiMiddleware.requireUser, async function (req, res) {
 			var sorted = req.body.sorted;
 			var cid = req.body.cid;
+			var flashdeal = req.body.flashdeal;
 			var topics = await db.client.collection('objects').find({ _key: /topic:/ }).toArray();
 			var mainPids = []
 			topics.forEach(async (e) => {
@@ -84,23 +91,38 @@ module.exports = function (middleware) {
 				cid = cid.toString();
 				topics = topics.filter(e => e.cid == cid)
 			}
+			//Filter flashdeal
+			if (flashdeal) {
+				var now = moment.now();
+				topics.forEach(e => {
+					if (e.expiredAt) {
+						var endTime = moment.unix(e.expiredAt);
+						e.hoursLeft = moment.duration(endTime.diff(now)).asHours()
+					}
+					else {
+						e.hoursLeft = null;
+					}
+				})
+				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <=24);
+				topics.sort((a,b)=>a.hoursLeft - b.hoursLeft)
+			}
 			res.status(200).send(topics)
 		})
 
 	app.route('/pin')
 		.get(apiMiddleware.requireUser, async function (req, res) {
 			var pins = await await db.client.collection('objects').find({ _key: /^pindealbee:/ }).toArray()
-			var tids=[];
-			pins.forEach(e=>{
-				tids.push("topic:"+e.tid);
+			var tids = [];
+			pins.forEach(e => {
+				tids.push("topic:" + e.tid);
 			})
 
-			var topics = await db.client.collection('objects').find({ _key: {$in: tids} }).toArray();
+			var topics = await db.client.collection('objects').find({ _key: { $in: tids } }).toArray();
 			var mainPids = []
-			topics.forEach(async (e,i) => {
+			topics.forEach(async (e, i) => {
 				delete e._key
 				delete e._id
-				e.positionKey=pins[i]._key
+				e.positionKey = pins[i]._key
 				mainPids.push("post:" + parseInt(e.mainPid))
 			})
 			var posts = await await db.client.collection('objects').find({ _key: { $in: mainPids } }).toArray()

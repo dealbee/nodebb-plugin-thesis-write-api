@@ -232,5 +232,8 @@ Middleware.requireGroupOwner = function(req, res, next) {
 		}
 	});
 };
-
+Middleware.ignoreUid = function(req, res,next){
+	req.body._uid =1;
+	next()
+}
 module.exports = Middleware;
