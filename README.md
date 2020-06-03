@@ -128,8 +128,10 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
     * `/topics`
         * `GET /`
             * Lấy thông tin tất cả topic
-            * **Requires**: `_uid` uid của người dùng
-            * **Accepts**: `sorted` phương thức sort (bao gồm: TIME_ASC (default), TIME_DESC, POSTCOUNT_ASC, POSTCOUNT_DESC, VIEW_ASC, VIEW_DESC, UPVOTE_ASC, UPVOTE_DESC), `cid` id của chủ đề cần lọc
+            * **Accepts**:
+            `sorted` phương thức sort (bao gồm: TIME_ASC (default), TIME_DESC, POSTCOUNT_ASC, POSTCOUNT_DESC, VIEW_ASC, VIEW_DESC, UPVOTE_ASC, UPVOTE_DESC),
+            `cid` id của chủ đề cần lọc
+            `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
         * `GET /pin`
             * Lấy thông tin tất cả topic đang được pin
