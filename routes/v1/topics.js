@@ -36,7 +36,7 @@ module.exports = function (middleware) {
 				return errorHandler.handle(err, res, data);
 			});
 		})
-		.get(apiMiddleware.ignoreUid,apiMiddleware.requireUser, async function (req, res) {
+		.get(async function (req, res) {
 			var sorted = req.body.sorted;
 			var cid = req.body.cid;
 			var flashdeal = req.body.flashdeal;
@@ -96,7 +96,7 @@ module.exports = function (middleware) {
 				var now = moment.now();
 				topics.forEach(e => {
 					if (e.expiredAt) {
-						var endTime = moment.unix(e.expiredAt);
+						var endTime = moment.unix(e.expiredAt/1000);
 						e.hoursLeft = moment.duration(endTime.diff(now)).asHours()
 					}
 					else {
