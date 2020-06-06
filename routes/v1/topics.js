@@ -8,7 +8,8 @@ var Topics = require.main.require('./src/topics'),
 	utils = require('./utils'),
 	winston = require.main.require('winston'),
 	db = require.main.require('./src/database'),
-	moment = require('../../lib/moment')
+	moment = require('../../lib/moment'),
+	currency = require('../../lib/currency.json');
 module.exports = function (middleware) {
 	var app = require('express').Router();
 
@@ -81,6 +82,42 @@ module.exports = function (middleware) {
 				else if (sorted == "VIEW_DESC") {
 					topics.sort((a, b) => b.viewcount - a.viewcount);
 				}
+				else if (sorted == "COMMENT_ASC"){
+					topics.sort((a, b) => a.postcount - b.postcount);
+				}
+				else if (sorted == "COMMENT_DESC"){
+					topics.sort((a, b) => b.postcount - a.postcount);
+				}
+				else if (sorted == "DISCOUNT_MONEY_ASC" || sorted == "DISCOUNT_MONEY_DESC") {
+
+					var currencyReq = req.body.currency;
+					if (!currencyReq) {
+						return res.status(400).send({ message: "Currency is required for sorting by discount money" })
+					}
+					currencyReq = currencyReq.toUpperCase();
+					if (!(currency.indexOf(currencyReq) > -1)) {
+						return res.status(400).send({ message: "Invalid currency" })
+					}
+					topics = topics.filter(e => {
+						if (e.discountMoney) {
+							if (e.currency) {
+								return e.currency.includes(currencyReq)
+							}
+							else {
+								return false;
+							}
+						}
+						else {
+							return false;
+						}
+					})
+					if (sorted == "DISCOUNT_MONEY_DESC") {
+						topics.sort((a, b) => parseInt(b.discountMoney) - parseInt(a.discountMoney))
+					}
+					else {
+						topics.sort((a, b) => parseInt(a.discountMoney) - parseInt(b.discountMoney))
+					}
+				}
 			}
 			else {
 				topics.sort((a, b) => a.timestamp - b.timestamp);
@@ -96,15 +133,15 @@ module.exports = function (middleware) {
 				var now = moment.now();
 				topics.forEach(e => {
 					if (e.expiredAt) {
-						var endTime = moment.unix(e.expiredAt/1000);
+						var endTime = moment.unix(e.expiredAt / 1000);
 						e.hoursLeft = moment.duration(endTime.diff(now)).asHours()
 					}
 					else {
 						e.hoursLeft = null;
 					}
 				})
-				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <=24);
-				topics.sort((a,b)=>a.hoursLeft - b.hoursLeft)
+				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <= 24);
+				topics.sort((a, b) => a.hoursLeft - b.hoursLeft)
 			}
 			res.status(200).send(topics)
 		})
