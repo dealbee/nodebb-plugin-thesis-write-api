@@ -139,7 +139,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
                 * COMMENT_ASC,
                 * COMMENT_DESC,
                 * DISCOUNT_MONEY_ASC (cần thêm `currency`: [currency](./lib/currency.json)),
-                * DISCOUNT_MONEY_DESC (cần thêm `currency`: [currency](./lib/currency.json))),
+                * DISCOUNT_MONEY_DESC (cần thêm `currency`: [currency](./lib/currency.json)),
              * `cid` id của chủ đề cần lọc
              * `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
