@@ -38,9 +38,9 @@ module.exports = function (middleware) {
 			});
 		})
 		.get(async function (req, res) {
-			var sorted = req.body.sorted;
-			var cid = req.body.cid;
-			var flashdeal = req.body.flashdeal;
+			var sorted =req.query.sorted;
+			var cid = req.query.cid;
+			var flashdeal = req.query.flashdeal.toUpperCase();
 			var topics = await db.client.collection('objects').find({ _key: /topic:/ }).toArray();
 			var mainPids = []
 			topics.forEach(async (e) => {
@@ -90,7 +90,7 @@ module.exports = function (middleware) {
 				}
 				else if (sorted == "DISCOUNT_MONEY_ASC" || sorted == "DISCOUNT_MONEY_DESC") {
 
-					var currencyReq = req.body.currency;
+					var currencyReq = req.query.currency;
 					if (!currencyReq) {
 						return res.status(400).send({ message: "Currency is required for sorting by discount money" })
 					}
@@ -129,7 +129,7 @@ module.exports = function (middleware) {
 				topics = topics.filter(e => e.cid == cid)
 			}
 			//Filter flashdeal
-			if (flashdeal) {
+			if (flashdeal=="TRUE") {
 				var now = moment.now();
 				topics.forEach(e => {
 					if (e.expiredAt) {
