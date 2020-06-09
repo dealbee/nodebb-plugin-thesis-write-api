@@ -19,28 +19,39 @@ module.exports = function (middleware) {
 			res.status(200).send({ ok: "ok" });
 		})
 	app.route('/')
-		.post(apiMiddleware.requireUser, function (req, res) {
+		.post(apiMiddleware.requireUser,async function (req, res) {
 			if (!utils.checkRequired(['cid', 'title', 'content'], req, res)) {
 				return false;
 			}
-
+			console.log('GO')
 			var payload = {
 				cid: req.body.cid,
 				title: req.body.title,
 				content: req.body.content,
 				tags: req.body.tags || [],
 				uid: req.user.uid,
-				timestamp: req.body.timestamp
+				timestamp: req.body.timestamp,
+				custom: 'custom'
 			};
 
-			Topics.post(payload, function (err, data) {
+			Topics.post(payload, async function (err, data) {
+				// var topic = await db.client.collection('objects').find({ _key: `topic:${data.topicData.tid}` }).toArray();
+				// topic=topic[0];
+				// // console.log(topic)
+				// topic.brand="nrad test"
+				// var save = await db.client.collection('objects').save(topic);
+				// console.log(save)
 				return errorHandler.handle(err, res, data);
 			});
 		})
 		.get(async function (req, res) {
 			var sorted =req.query.sorted;
 			var cid = req.query.cid;
-			var flashdeal = req.query.flashdeal.toUpperCase();
+			var flashdeal = req.query.flashdeal;
+			if (flashdeal)
+			{
+				flashdeal=flashdeal.toUpperCase()
+			}
 			var topics = await db.client.collection('objects').find({ _key: /topic:/ }).toArray();
 			var mainPids = []
 			topics.forEach(async (e) => {
