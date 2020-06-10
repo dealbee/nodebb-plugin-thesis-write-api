@@ -153,7 +153,13 @@ module.exports = function (middleware) {
 					}
 				})
 				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <= 24);
-				topics.sort((a, b) => a.hoursLeft - b.hoursLeft)
+				if (sorted == "TIME_LEFT_ASC") {
+					topics.sort((a, b) => a.hoursLeft - b.hoursLeft)
+				}
+				if (sorted == "TIME_LEFT_DESC") {
+
+					topics.sort((a, b) => b.hoursLeft - a.hoursLeft)
+				}
 			}
 			try {
 				checkNumberInt('limit', limit);
@@ -171,7 +177,7 @@ module.exports = function (middleware) {
 					return res.status(200).send({ message: "Limit is required along with offset" })
 				}
 			}
-			if (limit!=null && offset!=null) {
+			if (limit != null && offset != null) {
 				limit = parseInt(limit)
 				offset = parseInt(offset)
 				topics = topics.slice(offset, limit + offset);

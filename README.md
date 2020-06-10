@@ -142,6 +142,8 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
                 * COMMENT_DESC,
                 * DISCOUNT_MONEY_ASC (cần thêm `currency`: [currency](./lib/currency.json)),
                 * DISCOUNT_MONEY_DESC (cần thêm `currency`: [currency](./lib/currency.json)),
+                * TIME_LEFT_DESC áp dụng cho flashdeal
+                * TIME_LEFT_ASC áp dụng cho flashdeal
              * `cid` id của chủ đề cần lọc
              * `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
              * `limit` đi kèm cùng `offset` để phân trang
