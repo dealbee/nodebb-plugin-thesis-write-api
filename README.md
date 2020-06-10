@@ -131,8 +131,10 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * **Accepts**:
              * `sorted` phương thức sort, bao gồm:
                 * TIME_ASC (default),
-                * TIME_DESC, POSTCOUNT_ASC,
-                * POSTCOUNT_DESC, VIEW_ASC,
+                * TIME_DESC,
+                * POSTCOUNT_ASC,
+                * POSTCOUNT_DESC,
+                * VIEW_ASC,
                 * VIEW_DESC,
                 * UPVOTE_ASC,
                 * UPVOTE_DESC,
@@ -142,6 +144,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
                 * DISCOUNT_MONEY_DESC (cần thêm `currency`: [currency](./lib/currency.json)),
              * `cid` id của chủ đề cần lọc
              * `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
+             * `limit` đi kèm cùng `offset` để phân trang
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
         * `GET /pin`
             * Lấy thông tin tất cả topic đang được pin
@@ -149,8 +152,22 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON, có thêm trường đặc biệt là positionKey (pindealbee:{typeID}:{positionID})
         * `POST /`
             * Tạo topic
-            * **Requires**: `cid`, `title`, `content`
-            * **Accepts**: `tags (array)`
+            * **Requires**: `cid`, `title`, `content`, `_uid` của người tạo
+            * **Accepts**:
+                * `tags (array)`, 
+                * `amount` kiểu int,
+                * `brand`,
+                * `coupon`,
+                * `currency` phải [hợp lệ](./lib/currency.json),
+                * `dealUrl`,
+                * `price` kiểu float,
+                * `discountPercentage` kiểu float <=100,
+                * `discountPrice` kiểu float,
+                * `expiredAte` chuỗi milisecond,
+                * `maxDiscount` kiểu float,
+                * `minOrder` kiểu int, 
+                * `thumb`,
+                * `sku`
         * `POST /:tid`
             * Thêm reply cho topic
             * **Requires**: `content`

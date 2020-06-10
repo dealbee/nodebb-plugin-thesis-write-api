@@ -9,21 +9,23 @@ var passport = require.main.require('passport'),
 	topics = require.main.require('./src/topics'),
 	categories = require.main.require('./src/categories'),
 	errorHandler = require('../../lib/errorHandler'),
-
+	moment = require('../../lib/moment'),
+	currencyList = require('../../lib/currency.json'),
+	currencyFullList = require('../../lib/currencyFull.json'),
 	Middleware = {};
 
-Middleware.requireUser = function(req, res, next) {
+Middleware.requireUser = function (req, res, next) {
 	var writeApi = require.main.require('nodebb-plugin-thesis-write-api');
 	var routeMatch;
 
 	if (req.headers.hasOwnProperty('authorization')) {
-		passport.authenticate('bearer', { session: false }, function(err, user) {
+		passport.authenticate('bearer', { session: false }, function (err, user) {
 			if (err) { return next(err); }
 			if (!user) { return errorHandler.respond(401, res); }
 
 			// If the token received was a master token, a _uid must also be present for all calls
 			if (user.hasOwnProperty('uid')) {
-				req.login(user, function(err) {
+				req.login(user, function (err) {
 					if (err) { return errorHandler.respond(500, res); }
 
 					req.uid = user.uid;
@@ -35,7 +37,7 @@ Middleware.requireUser = function(req, res, next) {
 					user.uid = req.body._uid || req.query._uid;
 					delete user.master;
 
-					req.login(user, function(err) {
+					req.login(user, function (err) {
 						if (err) { return errorHandler.respond(500, res); }
 						req.uid = user.uid;
 						req.loggedIn = req.uid > 0;
@@ -56,7 +58,7 @@ Middleware.requireUser = function(req, res, next) {
 		var token = (writeApi.settings['jwt:payloadKey'] ? (req.query[writeApi.settings['jwt:payloadKey']] || req.body[writeApi.settings['jwt:payloadKey']]) : null) || req.query.token || req.body.token;
 		jwt.verify(token, writeApi.settings['jwt:secret'], {
 			ignoreExpiration: true,
-		}, function(err, decoded) {
+		}, function (err, decoded) {
 			if (!err && decoded) {
 				if (!decoded.hasOwnProperty('_uid')) {
 					return res.status(400).json(errorHandler.generate(
@@ -68,7 +70,7 @@ Middleware.requireUser = function(req, res, next) {
 
 				req.login({
 					uid: decoded._uid
-				}, function(err) {
+				}, function (err) {
 					if (err) { return errorHandler.respond(500, res); }
 
 					req.uid = decoded._uid;
@@ -86,7 +88,7 @@ Middleware.requireUser = function(req, res, next) {
 
 		user.isPasswordCorrect(uid, req.body.password, function (err, ok) {
 			if (ok) {
-				req.login({ uid: parseInt(uid, 10) }, function(err) {
+				req.login({ uid: parseInt(uid, 10) }, function (err) {
 					if (err) { return errorHandler.respond(500, res); }
 
 					req.uid = user.uid;
@@ -102,14 +104,14 @@ Middleware.requireUser = function(req, res, next) {
 	}
 };
 
-Middleware.associateUser = function(req, res, next) {
+Middleware.associateUser = function (req, res, next) {
 	if (req.headers.hasOwnProperty('authorization')) {
-		passport.authenticate('bearer', { session: false }, function(err, user) {
+		passport.authenticate('bearer', { session: false }, function (err, user) {
 			if (err || !user) { return next(err); }
 
 			// If the token received was a master token, a _uid must also be present for all calls
 			if (user.hasOwnProperty('uid')) {
-				req.login(user, function(err) {
+				req.login(user, function (err) {
 					if (err) { return errorHandler.respond(500, res); }
 
 					req.uid = user.uid;
@@ -121,7 +123,7 @@ Middleware.associateUser = function(req, res, next) {
 					user.uid = req.body._uid || req.query._uid;
 					delete user.master;
 
-					req.login(user, function(err) {
+					req.login(user, function (err) {
 						if (err) { return errorHandler.respond(500, res); }
 
 						req.uid = user.uid;
@@ -144,12 +146,12 @@ Middleware.associateUser = function(req, res, next) {
 	}
 };
 
-Middleware.requireAdmin = function(req, res, next) {
+Middleware.requireAdmin = function (req, res, next) {
 	if (!req.user) {
 		return errorHandler.respond(401, res);
 	}
 
-	user.isAdministrator(req.user.uid, function(err, isAdmin) {
+	user.isAdministrator(req.user.uid, function (err, isAdmin) {
 		if (err || !isAdmin) {
 			return errorHandler.respond(403, res);
 		}
@@ -158,7 +160,7 @@ Middleware.requireAdmin = function(req, res, next) {
 	});
 };
 
-Middleware.exposeAdmin = function(req, res, next) {
+Middleware.exposeAdmin = function (req, res, next) {
 	// Unlike `requireAdmin`, this middleware just checks the uid, and sets `isAdmin` in `res.locals`
 	res.locals.isAdmin = false;
 
@@ -166,7 +168,7 @@ Middleware.exposeAdmin = function(req, res, next) {
 		return next();
 	}
 
-	user.isAdministrator(req.user.uid, function(err, isAdmin) {
+	user.isAdministrator(req.user.uid, function (err, isAdmin) {
 		if (err) {
 			return errorHandler.handle(err, res);
 		} else {
@@ -176,9 +178,9 @@ Middleware.exposeAdmin = function(req, res, next) {
 	});
 }
 
-Middleware.validateTid = function(req, res, next) {
+Middleware.validateTid = function (req, res, next) {
 	if (req.params.hasOwnProperty('tid')) {
-		topics.exists(req.params.tid, function(err, exists) {
+		topics.exists(req.params.tid, function (err, exists) {
 			if (err) {
 				errorHandler.respond(500, res);
 			} else if (!exists) {
@@ -192,9 +194,9 @@ Middleware.validateTid = function(req, res, next) {
 	}
 };
 
-Middleware.validateCid = function(req, res, next) {
+Middleware.validateCid = function (req, res, next) {
 	if (req.params.hasOwnProperty('cid')) {
-		categories.exists(req.params.cid, function(err, exists) {
+		categories.exists(req.params.cid, function (err, exists) {
 			if (err) {
 				errorHandler.respond(500, res);
 			} else if (!exists) {
@@ -208,7 +210,7 @@ Middleware.validateCid = function(req, res, next) {
 	}
 };
 
-Middleware.validateGroup = function(req, res, next) {
+Middleware.validateGroup = function (req, res, next) {
 	if (res.locals.groupName) {
 		next();
 	} else {
@@ -216,7 +218,7 @@ Middleware.validateGroup = function(req, res, next) {
 	}
 };
 
-Middleware.requireGroupOwner = function(req, res, next) {
+Middleware.requireGroupOwner = function (req, res, next) {
 	if (!req.user || !req.user.uid) {
 		errorHandler.respond(401, res);
 	}
@@ -224,7 +226,7 @@ Middleware.requireGroupOwner = function(req, res, next) {
 	async.parallel({
 		isAdmin: async.apply(user.isAdministrator, req.user.uid),
 		isOwner: async.apply(groups.ownership.isOwner, req.user.uid, res.locals.groupName)
-	}, function(err, checks) {
+	}, function (err, checks) {
 		if (checks.isOwner || checks.isAdmin) {
 			next();
 		} else {
@@ -232,8 +234,112 @@ Middleware.requireGroupOwner = function(req, res, next) {
 		}
 	});
 };
-Middleware.ignoreUid = function(req, res,next){
-	req.body._uid =1;
+Middleware.ignoreUid = function (req, res, next) {
+	req.body._uid = 1;
 	next()
+}
+Middleware.checkOptionalData = function (req, res, next) {
+	let amount = req.body.amount,
+		brand = req.body.brand,
+		coupon = req.body.coupon,
+		currency = req.body.currency,
+		dealUrl = req.body.dealUrl,
+		discountMoney = "",
+		price = req.body.price,
+		discountPercentage = req.body.discountPercentage,
+		discountPrice = req.body.discountPrice,
+		expiredAt = req.body.expiredAt,
+		expiredDate = "",
+		expiredTime = "",
+		maxDiscount = req.body.maxDiscount,
+		minOrder = req.body.minOrder,
+		thumb = req.body.thumb,
+		sku= req.body.sku;
+	try {
+		checkNumberInt('amount', amount)
+		checkNumberFloat('price', price)
+		checkNumberFloat('discount percentage', discountPercentage)
+		checkNumberFloat('discount price', discountPrice)
+		checkNumberInt('expired timestamp', expiredAt)
+		checkNumberFloat('max discount money', maxDiscount)
+		checkNumberInt('minimum order', minOrder)
+	} catch (e) {
+		return res.status(400).send({ message: e })
+	}
+
+	if (expiredAt) {
+		expiredAt = parseFloat(expiredAt)
+		expiredTime = moment(expiredAt).format('hh:mm A')
+		expiredDate = moment(expiredAt).format('DD-MM-YYYY')
+	}
+	if (price && discountPrice) {
+		if (discountPrice >= price) {
+			return res.status(400).send({ message: "Discount price is greater than origin price" })
+		}
+		discountMoney = (parseFloat(price) - parseFloat(discountPrice)).toString()
+		if (!discountPercentage) {
+			discountPercentage = ((parseFloat(price) * 1.0 - parseFloat(discountPrice)) / price * 100).toFixed(2);
+		} else {
+			if (parseFloat(discountPercentage) >= 100) {
+				return res.status(400).send({ message: "Invalid discount percentage" })
+			}
+		}
+	}
+	if (currency){
+		currency=currency.toUpperCase();
+		if(!(currencyList.indexOf(currency)>=0))
+		{
+			return res.status(200).send({message:"Invalid currency"})
+		}
+		currency=currency+' - ';
+		currency=currencyFullList.find(e=>e.includes(currency))
+	}
+	let obj = {
+		amount,
+		brand,
+		coupon,
+		currency,
+		dealUrl,
+		discountMoney,
+		price,
+		discountPercentage,
+		discountPrice,
+		expiredAt,
+		expiredDate,
+		expiredTime,
+		maxDiscount,
+		minOrder,
+		thumb,
+		sku
+	}
+	// return res.status(200).send(obj)
+	req.body.optionalData = obj;
+	next();
+}
+var checkNumberInt = function (name, a) {
+	if (a) {
+		var num = parseFloat(a)
+		if (isNaN(num)) {
+			throw `Invalid ${name}`
+		}
+		else {
+			if (num % 1 > 0 || num < 0) {
+				throw `Invalid ${name}`
+			}
+		}
+	}
+}
+var checkNumberFloat = function (name, a) {
+	if (a) {
+		var num = parseInt(a)
+		if (isNaN(num)) {
+			throw `Invalid ${name}`
+		}
+		else {
+			if (num <= 0) {
+				throw `Invalid ${name}`
+			}
+		}
+	}
 }
 module.exports = Middleware;

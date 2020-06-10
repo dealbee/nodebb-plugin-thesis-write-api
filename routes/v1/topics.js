@@ -19,7 +19,7 @@ module.exports = function (middleware) {
 			res.status(200).send({ ok: "ok" });
 		})
 	app.route('/')
-		.post(apiMiddleware.requireUser,async function (req, res) {
+		.post(apiMiddleware.requireUser, apiMiddleware.checkOptionalData, async function (req, res) {
 			if (!utils.checkRequired(['cid', 'title', 'content'], req, res)) {
 				return false;
 			}
@@ -31,26 +31,27 @@ module.exports = function (middleware) {
 				tags: req.body.tags || [],
 				uid: req.user.uid,
 				timestamp: req.body.timestamp,
-				custom: 'custom'
 			};
 
 			Topics.post(payload, async function (err, data) {
-				// var topic = await db.client.collection('objects').find({ _key: `topic:${data.topicData.tid}` }).toArray();
-				// topic=topic[0];
-				// // console.log(topic)
-				// topic.brand="nrad test"
-				// var save = await db.client.collection('objects').save(topic);
-				// console.log(save)
+				var topic = await db.client.collection('objects').find({ _key: `topic:${data.topicData.tid}` }).toArray();
+				topic = topic[0];
+				// console.log(topic)
+				topic = { ...topic, ...req.body.optionalData }
+				data.topicData = { ...data.topicData, ...req.body.optionalData }
+				console.log(topic)
+				var save = await db.client.collection('objects').save(topic);
 				return errorHandler.handle(err, res, data);
 			});
 		})
 		.get(async function (req, res) {
-			var sorted =req.query.sorted;
+			var sorted = req.query.sorted;
 			var cid = req.query.cid;
 			var flashdeal = req.query.flashdeal;
-			if (flashdeal)
-			{
-				flashdeal=flashdeal.toUpperCase()
+			var offset = req.query.offset;
+			var limit = req.query.limit;
+			if (flashdeal) {
+				flashdeal = flashdeal.toUpperCase()
 			}
 			var topics = await db.client.collection('objects').find({ _key: /topic:/ }).toArray();
 			var mainPids = []
@@ -93,10 +94,10 @@ module.exports = function (middleware) {
 				else if (sorted == "VIEW_DESC") {
 					topics.sort((a, b) => b.viewcount - a.viewcount);
 				}
-				else if (sorted == "COMMENT_ASC"){
+				else if (sorted == "COMMENT_ASC") {
 					topics.sort((a, b) => a.postcount - b.postcount);
 				}
-				else if (sorted == "COMMENT_DESC"){
+				else if (sorted == "COMMENT_DESC") {
 					topics.sort((a, b) => b.postcount - a.postcount);
 				}
 				else if (sorted == "DISCOUNT_MONEY_ASC" || sorted == "DISCOUNT_MONEY_DESC") {
@@ -140,7 +141,7 @@ module.exports = function (middleware) {
 				topics = topics.filter(e => e.cid == cid)
 			}
 			//Filter flashdeal
-			if (flashdeal=="TRUE") {
+			if (flashdeal == "TRUE") {
 				var now = moment.now();
 				topics.forEach(e => {
 					if (e.expiredAt) {
@@ -153,6 +154,27 @@ module.exports = function (middleware) {
 				})
 				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <= 24);
 				topics.sort((a, b) => a.hoursLeft - b.hoursLeft)
+			}
+			try {
+				checkNumberInt('limit', limit);
+				checkNumberInt('offset', offset);
+			} catch (e) {
+				return res.status(200).send({ message: e })
+			}
+			if (!offset) {
+				if (limit) {
+					return res.status(200).send({ message: "Offset is required along with limit" })
+				}
+			}
+			else {
+				if (!limit) {
+					return res.status(200).send({ message: "Limit is required along with offset" })
+				}
+			}
+			if (limit!=null && offset!=null) {
+				limit = parseInt(limit)
+				offset = parseInt(offset)
+				topics = topics.slice(offset, limit + offset);
 			}
 			res.status(200).send(topics)
 		})
@@ -286,3 +308,16 @@ module.exports = function (middleware) {
 
 	return app;
 };
+var checkNumberInt = function (name, a) {
+	if (a) {
+		var num = parseFloat(a)
+		if (isNaN(num)) {
+			throw `Invalid ${name}`
+		}
+		else {
+			if (num % 1 > 0 || num < 0) {
+				throw `Invalid ${name}`
+			}
+		}
+	}
+}
