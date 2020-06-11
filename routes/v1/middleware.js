@@ -19,14 +19,20 @@ Middleware.requireUser = function (req, res, next) {
 	var routeMatch;
 
 	if (req.headers.hasOwnProperty('authorization')) {
-		passport.authenticate('bearer', { session: false }, function (err, user) {
-			if (err) { return next(err); }
-			if (!user) { return errorHandler.respond(401, res); }
+		passport.authenticate('bearer', {session: false}, function (err, user) {
+			if (err) {
+				return next(err);
+			}
+			if (!user) {
+				return errorHandler.respond(401, res);
+			}
 
 			// If the token received was a master token, a _uid must also be present for all calls
 			if (user.hasOwnProperty('uid')) {
 				req.login(user, function (err) {
-					if (err) { return errorHandler.respond(500, res); }
+					if (err) {
+						return errorHandler.respond(500, res);
+					}
 
 					req.uid = user.uid;
 					req.loggedIn = req.uid > 0;
@@ -38,7 +44,9 @@ Middleware.requireUser = function (req, res, next) {
 					delete user.master;
 
 					req.login(user, function (err) {
-						if (err) { return errorHandler.respond(500, res); }
+						if (err) {
+							return errorHandler.respond(500, res);
+						}
 						req.uid = user.uid;
 						req.loggedIn = req.uid > 0;
 						next();
@@ -71,7 +79,9 @@ Middleware.requireUser = function (req, res, next) {
 				req.login({
 					uid: decoded._uid
 				}, function (err) {
-					if (err) { return errorHandler.respond(500, res); }
+					if (err) {
+						return errorHandler.respond(500, res);
+					}
 
 					req.uid = decoded._uid;
 					req.loggedIn = req.uid > 0;
@@ -88,8 +98,10 @@ Middleware.requireUser = function (req, res, next) {
 
 		user.isPasswordCorrect(uid, req.body.password, function (err, ok) {
 			if (ok) {
-				req.login({ uid: parseInt(uid, 10) }, function (err) {
-					if (err) { return errorHandler.respond(500, res); }
+				req.login({uid: parseInt(uid, 10)}, function (err) {
+					if (err) {
+						return errorHandler.respond(500, res);
+					}
 
 					req.uid = user.uid;
 					req.loggedIn = req.uid > 0;
@@ -106,13 +118,17 @@ Middleware.requireUser = function (req, res, next) {
 
 Middleware.associateUser = function (req, res, next) {
 	if (req.headers.hasOwnProperty('authorization')) {
-		passport.authenticate('bearer', { session: false }, function (err, user) {
-			if (err || !user) { return next(err); }
+		passport.authenticate('bearer', {session: false}, function (err, user) {
+			if (err || !user) {
+				return next(err);
+			}
 
 			// If the token received was a master token, a _uid must also be present for all calls
 			if (user.hasOwnProperty('uid')) {
 				req.login(user, function (err) {
-					if (err) { return errorHandler.respond(500, res); }
+					if (err) {
+						return errorHandler.respond(500, res);
+					}
 
 					req.uid = user.uid;
 					req.loggedIn = req.uid > 0;
@@ -124,7 +140,9 @@ Middleware.associateUser = function (req, res, next) {
 					delete user.master;
 
 					req.login(user, function (err) {
-						if (err) { return errorHandler.respond(500, res); }
+						if (err) {
+							return errorHandler.respond(500, res);
+						}
 
 						req.uid = user.uid;
 						req.loggedIn = req.uid > 0;
@@ -254,7 +272,7 @@ Middleware.checkOptionalData = function (req, res, next) {
 		maxDiscount = req.body.maxDiscount,
 		minOrder = req.body.minOrder,
 		thumb = req.body.thumb,
-		sku= req.body.sku;
+		sku = req.body.sku;
 	try {
 		checkNumberInt('amount', amount)
 		checkNumberFloat('price', price)
@@ -264,7 +282,7 @@ Middleware.checkOptionalData = function (req, res, next) {
 		checkNumberFloat('max discount money', maxDiscount)
 		checkNumberInt('minimum order', minOrder)
 	} catch (e) {
-		return res.status(400).send({ message: e })
+		return res.status(400).send({message: e})
 	}
 
 	if (expiredAt) {
@@ -273,42 +291,45 @@ Middleware.checkOptionalData = function (req, res, next) {
 		expiredDate = moment(expiredAt).format('DD-MM-YYYY')
 	}
 	if (price && discountPrice) {
+		let floatPrice = parseFloat(price)
+		let floatDiscountPrice = parseFloat(discountPrice);
 		if (parseFloat(discountPrice) >= parseFloat(price)) {
-			return res.status(400).send({ message: "Discount price is greater than origin price" })
+			return res.status(400).send({message: "Discount price is greater than origin price"})
 		}
-		discountMoney = (parseFloat(price) - parseFloat(discountPrice)).toString()
+		discountMoney = floatPrice - floatDiscountPrice;
+		discountMoney = Math.round(discountMoney * 100) / 100
 		if (!discountPercentage) {
-			discountPercentage = ((parseFloat(price) * 1.0 - parseFloat(discountPrice)) / price * 100).toFixed(2);
+			discountPercentage = (floatPrice - floatDiscountPrice) / floatPrice * 100;
+			discountPercentage = Math.round(discountPercentage * 100) / 100;
 		} else {
 			if (parseFloat(discountPercentage) >= 100) {
-				return res.status(400).send({ message: "Invalid discount percentage" })
+				return res.status(400).send({message: "Invalid discount percentage"})
 			}
 		}
 	}
-	if (currency){
-		currency=currency.toUpperCase();
-		if(!(currencyList.indexOf(currency)>=0))
-		{
-			return res.status(200).send({message:"Invalid currency"})
+	if (currency) {
+		currency = currency.toUpperCase();
+		if (!(currencyList.indexOf(currency) >= 0)) {
+			return res.status(200).send({message: "Invalid currency"})
 		}
-		currency=currency+' - ';
-		currency=currencyFullList.find(e=>e.includes(currency))
+		currency = currency + ' - ';
+		currency = currencyFullList.find(e => e.includes(currency))
 	}
 	let obj = {
-		amount,
+		amount: parseInt(amount),
 		brand,
 		coupon,
 		currency,
 		dealUrl,
 		discountMoney,
-		price,
-		discountPercentage,
-		discountPrice,
+		price: parseFloat(price),
+		discountPercentage: parseFloat(discountPercentage),
+		discountPrice: parseFloat(discountPrice),
 		expiredAt,
 		expiredDate,
 		expiredTime,
-		maxDiscount,
-		minOrder,
+		maxDiscount: parseFloat(maxDiscount),
+		minOrder: parseInt(minOrder),
 		thumb,
 		sku
 	}
@@ -321,8 +342,7 @@ var checkNumberInt = function (name, a) {
 		var num = parseFloat(a)
 		if (isNaN(num)) {
 			throw `Invalid ${name}`
-		}
-		else {
+		} else {
 			if (num % 1 > 0 || num < 0) {
 				throw `Invalid ${name}`
 			}
@@ -334,8 +354,7 @@ var checkNumberFloat = function (name, a) {
 		var num = parseInt(a)
 		if (isNaN(num)) {
 			throw `Invalid ${name}`
-		}
-		else {
+		} else {
 			if (num <= 0) {
 				throw `Invalid ${name}`
 			}
