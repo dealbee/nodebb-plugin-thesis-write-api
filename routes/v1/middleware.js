@@ -273,7 +273,7 @@ Middleware.checkOptionalData = function (req, res, next) {
 		expiredDate = moment(expiredAt).format('DD-MM-YYYY')
 	}
 	if (price && discountPrice) {
-		if (discountPrice >= price) {
+		if (parseFloat(discountPrice) >= parseFloat(price)) {
 			return res.status(400).send({ message: "Discount price is greater than origin price" })
 		}
 		discountMoney = (parseFloat(price) - parseFloat(discountPrice)).toString()
