@@ -132,8 +132,6 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
              * `sorted` phương thức sort, bao gồm:
                 * TIME_ASC (default),
                 * TIME_DESC,
-                * POSTCOUNT_ASC,
-                * POSTCOUNT_DESC,
                 * VIEW_ASC,
                 * VIEW_DESC,
                 * UPVOTE_ASC,

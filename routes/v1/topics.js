@@ -16,7 +16,7 @@ module.exports = function (middleware) {
 	app.route('/test')
 		.get(function (req, res) {
 			console.log(req);
-			res.status(200).send({ ok: "ok" });
+			res.status(200).send({ok: "ok"});
 		})
 	app.route('/')
 		.post(apiMiddleware.requireUser, apiMiddleware.checkOptionalData, async function (req, res) {
@@ -34,166 +34,111 @@ module.exports = function (middleware) {
 			};
 
 			Topics.post(payload, async function (err, data) {
-				var topic = await db.client.collection('objects').find({ _key: `topic:${data.topicData.tid}` }).toArray();
+				var topic = await db.client.collection('objects').find({_key: `topic:${data.topicData.tid}`}).toArray();
 				topic = topic[0];
-				// console.log(topic)
-				topic = { ...topic, ...req.body.optionalData }
-				data.topicData = { ...data.topicData, ...req.body.optionalData }
-				console.log(topic)
+				topic = {...topic, ...req.body.optionalData}
+				data.topicData = {...data.topicData, ...req.body.optionalData}
 				var save = await db.client.collection('objects').save(topic);
 				return errorHandler.handle(err, res, data);
 			});
 		})
 		.get(async function (req, res) {
-			var sorted = req.query.sorted;
-			var cid = req.query.cid;
-			var flashdeal = req.query.flashdeal;
-			var offset = req.query.offset;
-			var limit = req.query.limit;
-			if (flashdeal) {
-				flashdeal = flashdeal.toUpperCase()
+			let sorted = req.query.sorted;
+			let cid = req.query.cid;
+			let flashdeal = req.query.flashdeal;
+			let limit = req.query.limit;
+			let skip = req.query.offset;
+
+			let objFind = {_key: /^topic:/};
+			let objSorted = {$sort: null};
+
+			try {
+				checkNumberInt('category id', cid)
+				checkNumberInt('limit', limit)
+				checkNumberInt('offset', skip)
+			} catch (e) {
+				return res.status(400).send({message: e})
 			}
-			var topics = await db.client.collection('objects').find({ _key: /topic:/ }).toArray();
-			var mainPids = []
-			topics.forEach(async (e) => {
-				delete e._key
-				delete e._id
-				mainPids.push("post:" + parseInt(e.mainPid))
-			})
-			var posts = await await db.client.collection('objects').find({ _key: { $in: mainPids } }).toArray()
-			posts.forEach(e => {
-				if (!e.upvotes) {
-					e.upvotes = 0;
-				}
-			})
-			topics.forEach((e, i) => {
-				e.mainPost = posts[i];
-			})
-
-			//Sorted
-			if (sorted) {
-				sorted = sorted.toUpperCase()
-				if (sorted == "TIME_DESC") {
-					topics.sort((a, b) => b.timestamp - a.timestamp);
-				}
-				else if (sorted == "POSTCOUNT_ASC") {
-					topics.sort((a, b) => a.postcount - b.postcount);
-				}
-				else if (sorted == "POSTCOUNT_DESC") {
-					topics.sort((a, b) => b.postcount - a.postcount);
-				}
-				else if (sorted == "UPVOTE_ASC") {
-					topics.sort((a, b) => a.mainPost.upvotes - b.mainPost.upvotes);
-				}
-				else if (sorted == "UPVOTE_DESC") {
-					topics.sort((a, b) => b.mainPost.upvotes - a.mainPost.upvotes);
-				}
-				else if (sorted == "VIEW_ASC") {
-					topics.sort((a, b) => a.viewcount - b.viewcount);
-				}
-				else if (sorted == "VIEW_DESC") {
-					topics.sort((a, b) => b.viewcount - a.viewcount);
-				}
-				else if (sorted == "COMMENT_ASC") {
-					topics.sort((a, b) => a.postcount - b.postcount);
-				}
-				else if (sorted == "COMMENT_DESC") {
-					topics.sort((a, b) => b.postcount - a.postcount);
-				}
-				else if (sorted == "DISCOUNT_MONEY_ASC" || sorted == "DISCOUNT_MONEY_DESC") {
-
-					var currencyReq = req.query.currency;
-					if (!currencyReq) {
-						return res.status(400).send({ message: "Currency is required for sorting by discount money" })
-					}
+			if (sorted === 'TIME_DESC') {
+				objSorted.$sort = {timestamp: -1}
+			} else if (sorted === 'VIEW_ASC') {
+				objSorted.$sort = {viewcount: 1}
+			} else if (sorted === 'VIEW_DESC') {
+				objSorted.$sort = {viewcount: -1}
+			} else if (sorted === 'UPVOTE_ASC') {
+				objSorted.$sort = {upvotes: 1}
+			} else if (sorted === 'UPVOTE_DESC') {
+				objSorted.$sort = {upvotes: -1}
+			} else if (sorted === 'COMMENT_ASC') {
+				objSorted.$sort = {postcount: 1}
+			} else if (sorted === 'COMMENT_DESC') {
+				objSorted.$sort = {postcount: -1}
+			} else if (sorted === 'DISCOUNT_MONEY_ASC' || sorted === 'DISCOUNT_MONEY_DESC') {
+				let currencyReq = req.query.currency;
+				if (!currencyReq) {
+					return res.status(400).send({message: "'currency' is missing"})
+				} else {
 					currencyReq = currencyReq.toUpperCase();
 					if (!(currency.indexOf(currencyReq) > -1)) {
-						return res.status(400).send({ message: "Invalid currency" })
+						return res.status(400).send({message: "Invalid currency"})
 					}
-					topics = topics.filter(e => {
-						if (e.discountMoney) {
-							if (e.currency) {
-								return e.currency.includes(currencyReq)
-							}
-							else {
-								return false;
-							}
-						}
-						else {
-							return false;
-						}
-					})
-					if (sorted == "DISCOUNT_MONEY_DESC") {
-						topics.sort((a, b) => parseInt(b.discountMoney) - parseInt(a.discountMoney))
-					}
-					else {
-						topics.sort((a, b) => parseInt(a.discountMoney) - parseInt(b.discountMoney))
-					}
+					objFind.currency = {$regex: currencyReq + '*'}
 				}
+				if (sorted === 'DISCOUNT_MONEY_ASC') {
+					objSorted.$sort = {discountMoney: 1}
+				} else {
+					objSorted.$sort = {discountMoney: -1}
+				}
+			} else {
+				objSorted.$sort = {timestamp: 1}
 			}
-			else {
-				topics.sort((a, b) => a.timestamp - b.timestamp);
-			}
-
-			//Filtered cid 
 			if (cid) {
-				cid = cid.toString();
-				topics = topics.filter(e => e.cid == cid)
+				objFind.cid = parseInt(cid);
 			}
-			//Filter flashdeal
-			if (flashdeal == "TRUE") {
-				var now = moment.now();
-				topics.forEach(e => {
-					if (e.expiredAt) {
-						var endTime = moment.unix(e.expiredAt / 1000);
-						e.hoursLeft = moment.duration(endTime.diff(now)).asHours()
+			if (flashdeal) {
+				flashdeal = flashdeal.toUpperCase();
+				if (flashdeal === 'TRUE') {
+					let now = moment().valueOf();
+					objFind.$and = [
+						{expiredAt: {$gt: now}},
+						{expiredAt: {$lt: now + 86400000}}
+					]
+					if (sorted === 'TIME_LEFT_DESC') {
+						objSorted.$sort = {expiredAt: -1}
+					} else if (sorted === 'TIME_LEFT_ASC') {
+						objSorted.$sort = {expiredAt: 1}
 					}
-					else {
-						e.hoursLeft = null;
-					}
-				})
-				topics = topics.filter(e => e.hoursLeft > 0 && e.hoursLeft <= 24);
-				if (sorted == "TIME_LEFT_ASC") {
-					topics.sort((a, b) => a.hoursLeft - b.hoursLeft)
 				}
-				if (sorted == "TIME_LEFT_DESC") {
+			}
+			if (limit) {
+				limit = parseInt(limit);
+			} else {
+				limit = 0;
+			}
 
-					topics.sort((a, b) => b.hoursLeft - a.hoursLeft)
-				}
+			if (skip) {
+				skip = parseInt(skip);
+			} else {
+				skip = 0;
 			}
-			try {
-				checkNumberInt('limit', limit);
-				checkNumberInt('offset', offset);
-			} catch (e) {
-				return res.status(200).send({ message: e })
-			}
-			if (!offset) {
-				if (limit) {
-					return res.status(200).send({ message: "Offset is required along with limit" })
-				}
-			}
-			else {
-				if (!limit) {
-					return res.status(200).send({ message: "Limit is required along with offset" })
-				}
-			}
-			if (limit != null && offset != null) {
-				limit = parseInt(limit)
-				offset = parseInt(offset)
-				topics = topics.slice(offset, limit + offset);
-			}
-			res.status(200).send(topics)
+			let topics = await db.client.collection('objects')
+				.find(objFind)
+				.sort(objSorted.$sort)
+				.limit(limit)
+				.skip(skip)
+				.toArray();
+			res.status(200).send(topics);
 		})
 
 	app.route('/pin')
 		.get(apiMiddleware.requireUser, async function (req, res) {
-			var pins = await await db.client.collection('objects').find({ _key: /^pindealbee:/ }).toArray()
+			var pins = await await db.client.collection('objects').find({_key: /^pindealbee:/}).toArray()
 			var tids = [];
 			pins.forEach(e => {
 				tids.push("topic:" + e.tid);
 			})
 
-			var topics = await db.client.collection('objects').find({ _key: { $in: tids } }).toArray();
+			var topics = await db.client.collection('objects').find({_key: {$in: tids}}).toArray();
 			var mainPids = []
 			topics.forEach(async (e, i) => {
 				delete e._key
@@ -201,7 +146,7 @@ module.exports = function (middleware) {
 				e.positionKey = pins[i]._key
 				mainPids.push("post:" + parseInt(e.mainPid))
 			})
-			var posts = await await db.client.collection('objects').find({ _key: { $in: mainPids } }).toArray()
+			var posts = await await db.client.collection('objects').find({_key: {$in: mainPids}}).toArray()
 			posts.forEach(e => {
 				if (!e.upvotes) {
 					e.upvotes = 0;
@@ -226,7 +171,9 @@ module.exports = function (middleware) {
 				timestamp: req.body.timestamp
 			};
 
-			if (req.body.toPid) { payload.toPid = req.body.toPid; }
+			if (req.body.toPid) {
+				payload.toPid = req.body.toPid;
+			}
 
 			Topics.reply(payload, function (err, returnData) {
 				errorHandler.handle(err, res, returnData);
@@ -251,10 +198,18 @@ module.exports = function (middleware) {
 			console.log(payload);
 
 			// Maybe a "set if available" utils method may come in handy
-			if (req.body.handle) { payload.handle = req.body.handle; }
-			if (req.body.title) { payload.title = req.body.title; }
-			if (req.body.topic_thumb) { payload.options.topic_thumb = req.body.topic_thumb; }
-			if (req.body.tags) { payload.options.tags = req.body.tags; }
+			if (req.body.handle) {
+				payload.handle = req.body.handle;
+			}
+			if (req.body.title) {
+				payload.title = req.body.title;
+			}
+			if (req.body.topic_thumb) {
+				payload.options.topic_thumb = req.body.topic_thumb;
+			}
+			if (req.body.tags) {
+				payload.options.tags = req.body.tags;
+			}
 
 			Posts.edit(payload, function (err, returnData) {
 				errorHandler.handle(err, res, returnData);
@@ -319,8 +274,7 @@ var checkNumberInt = function (name, a) {
 		var num = parseFloat(a)
 		if (isNaN(num)) {
 			throw `Invalid ${name}`
-		}
-		else {
+		} else {
 			if (num % 1 > 0 || num < 0) {
 				throw `Invalid ${name}`
 			}

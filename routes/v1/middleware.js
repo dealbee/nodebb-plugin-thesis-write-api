@@ -333,7 +333,6 @@ Middleware.checkOptionalData = function (req, res, next) {
 		thumb,
 		sku
 	}
-	// return res.status(200).send(obj)
 	req.body.optionalData = obj;
 	next();
 }
