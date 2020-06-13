@@ -155,6 +155,17 @@ module.exports = function (middleware) {
 						}
 					}
 				]).toArray()
+			//Format
+			topics = topics.map(topic=>{
+				topic={
+					positionKey: topic._key,
+					...topic,
+					...topic.topic[0]
+				};
+				delete topic.topic;
+				delete topic.topicKey;
+				return topic;
+			})
 			res.status(200).send(topics)
 		})
 
