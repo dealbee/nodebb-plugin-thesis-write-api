@@ -95,6 +95,8 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             *Xóa token tương ứng của người dùng
             * **Accepts**: No parameters
     * `/categories`
+        * `GET /`
+            * Lấy danh sách tất cả categories
         * `POST /`
             * Tạo mới một category
             * **Requires**: `name`
@@ -148,8 +150,8 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
         * `GET /pin`
             * Lấy thông tin tất cả topic đang được pin
-            * **Requires**: `_uid` uid của người dùng
-            * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON, có thêm trường đặc biệt là positionKey (pindealbee:{typeID}:{positionID})
+            * **Required**: Bearer token
+            * **Response**: Mảng các bài viết được ghim được sắp xếp tăng dần theo vị trí, trường `_key` có dạng `pindealbee:{area id}:{position id}`
         * `POST /`
             * Tạo topic
             * **Requires**: `cid`, `title`, `content`, `_uid` của người tạo
