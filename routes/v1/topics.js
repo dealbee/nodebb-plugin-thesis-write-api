@@ -242,7 +242,7 @@ module.exports = function (middleware) {
 				.limit(limit)
 				.skip(offset)
 				.toArray();
-			res.status(200).send(comments)
+			return res.status(200).send(comments)
 		})
 
 	// app.route('/:tid')
