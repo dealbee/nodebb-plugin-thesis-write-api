@@ -156,10 +156,6 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * Lấy thông tin các comments (posts) của một topic (**không bao gồm main post**)
             * **Accepts**: `limit` (default 5), `offset`
             * **Response**: Thông tin chi tiết của các posts trong topic (**không bao gồm main post**)
-        * `GET /pin`
-            * Lấy thông tin tất cả topic đang được pin
-            * **Required**: Bearer token
-            * **Response**: Mảng các bài viết được ghim được sắp xếp tăng dần theo vị trí, trường `_key` có dạng `pindealbee:{area id}:{position id}`
         * `POST /`
             * Tạo topic
             * **Requires**: `cid`, `title`, `content`, `_uid` của người tạo
@@ -202,6 +198,11 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
         * `DELETE /:tid/tags`
             * **Accepts**: No parameters
             * Xóa các tag của topic
+    * `/pinned-topics`    
+        * `GET /pin`
+            * Lấy thông tin tất cả topic đang được pin
+            * **Required**: Bearer token
+            * **Response**: Mảng các bài viết được ghim được sắp xếp tăng dần theo vị trí, trường `_key` có dạng `pindealbee:{area id}:{position id}`
     * `/posts`
         * `POST /`
             * Thêm một comment (post) cho một topic
