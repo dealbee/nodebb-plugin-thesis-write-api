@@ -148,6 +148,14 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
              * `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
              * `limit` đi kèm cùng `offset` để phân trang
             * **Response**: Thông tin chi tiết của các bài đăng ở dạng array object JSON
+        * `GET /:tid`
+            * Lấy thông tin cuả topic có `tid`
+            * **Response**: Thông tin chi tiết của topic có `tid`, bao gồm thông tin chi tiết của main post, chứa ở trường `mainPost`
+        * `GET /:tid/posts`
+            * Ví dụ: `../topics/1/posts?limit=2&offset=1`
+            * Lấy thông tin các comments (posts) của một topic (**không bao gồm main post**)
+            * **Accepts**: `limit` (default 5), `offset`
+            * **Response**: Thông tin chi tiết của các posts trong topic (**không bao gồm main post**)
         * `GET /pin`
             * Lấy thông tin tất cả topic đang được pin
             * **Required**: Bearer token
@@ -195,6 +203,11 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * **Accepts**: No parameters
             * Xóa các tag của topic
     * `/posts`
+        * `POST /`
+            * Thêm một comment (post) cho một topic
+            * **Requires**: Bearer token, `uid` (người đăng comment), `tid` (topic được comment), `content`
+            * **Accepts**: `timestamp` chuỗi milisecond
+            * **Response**: Thông tin của comment vừa tạo
         * `PUT /:pid`
             * Edits post bằng post ID
             * **Requires**: `content`

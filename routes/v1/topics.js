@@ -119,54 +119,130 @@ module.exports = function (middleware) {
 				skip = 0;
 			}
 			let topics = await db.client.collection('objects')
-				.find(objFind)
-				.sort(objSorted.$sort)
-				.limit(limit)
-				.skip(skip)
-				.toArray();
-			res.status(200).send(topics);
-		})
-
-	app.route('/pin')
-		.get(apiMiddleware.ignoreUid, apiMiddleware.requireUser, async function (req, res) {
-			let topics = await db.client.collection('objects')
 				.aggregate([
 					{
 						$addFields: {
-							topicKey: {
-								$concat: ['topic:', {$toString: '$tid'}]
+							categoryKey: {
+								$concat: ['category:', {$toString: '$cid'}]
 							}
 						}
 					},
 					{
 						$lookup: {
 							from: 'objects',
-							localField: 'topicKey',
+							localField: 'categoryKey',
 							foreignField: '_key',
-							as: 'topic'
+							as: 'category'
 						}
 					},
 					{
-						$match: {_key: /^pindealbee/}
+						$match: objFind
 					},
 					{
-						$sort:{
-							_key: 1
-						}
+						$sort: objSorted.$sort
 					}
-				]).toArray()
-			//Format
-			topics = topics.map(topic=>{
-				topic={
-					positionKey: topic._key,
-					...topic,
-					...topic.topic[0]
-				};
-				delete topic.topic;
-				delete topic.topicKey;
+				])
+				.limit(limit)
+				.skip(skip)
+				.toArray();
+			topics = topics.map(topic => {
+				topic.categoryName = topic.category[0].name;
+				delete topic.category;
+				delete topic.categoryKey;
 				return topic;
 			})
-			res.status(200).send(topics)
+			res.status(200).send(topics);
+		})
+	app.route('/:tid')
+		.get(async function (req, res) {
+			{
+				let tid = req.params.tid;
+				try {
+					checkNumberInt('tid', tid)
+				} catch (e) {
+					res.status(400).send({message: e});
+				}
+
+				let topic = await db.client.collection('objects')
+					.aggregate([
+						{
+							$addFields: {
+								mainPostKey: {
+									$concat: ['post:', '$mainPid']
+								},
+								categoryKey: {
+									$concat: ['category:', {$toString: '$cid'}]
+								}
+							}
+						},
+						{
+							$lookup: {
+								from: 'objects',
+								localField: 'mainPostKey',
+								foreignField: '_key',
+								as: 'mainPost'
+							}
+						},
+						{
+							$unwind: '$mainPost'
+						},
+						{
+							$lookup: {
+								from: 'objects',
+								localField: 'categoryKey',
+								foreignField: '_key',
+								as: 'category'
+							}
+						},
+						{
+							$match: {_key: `topic:${tid}`}
+						}
+					]).toArray();
+				topic = topic[0];
+				topic.categoryName = topic.category[0].name;
+				delete topic.category;
+				delete topic.categoryKey;
+				delete topic.mainPostKey;
+				res.status(200).send(topic);
+			}
+		})
+	app.route('/:tid/posts')
+		.get(async function (req, res) {
+			let limit = req.query.limit;
+			let offset = req.query.offset;
+			let tid = req.params.tid;
+			try {
+				checkNumberInt('limit', limit);
+				checkNumberInt('offset', offset);
+				checkNumberInt('tid', tid);
+			} catch (e) {
+				res.status(400).send({message: e})
+			}
+			if (!limit) {
+				limit = 5;
+			} else {
+				limit = parseInt(limit);
+			}
+			if (!offset) {
+				offset = 0;
+			} else {
+				offset = parseInt(offset);
+			}
+			if (limit > 50) {
+				limit = 50;
+			}
+			offset++; // ignore main post
+			let comments = await db.client.collection('objects')
+				.find({
+					$and: [
+						{_key: /^post:/},
+						{tid: parseInt(tid)}
+					]
+				})
+				.limit(limit)
+				.skip(offset)
+				.toArray();
+			res.status(200).send(comments)
 		})
 
 	// app.route('/:tid')

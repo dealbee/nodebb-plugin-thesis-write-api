@@ -10,6 +10,11 @@ var posts = require.main.require('./src/posts'),
 module.exports = function(middleware) {
 	var app = require('express').Router();
 
+	app.route('/')
+		.post(apiMiddleware.ignoreUid, apiMiddleware.requireUser, async function (req, res) {
+			let result = await posts.create(req.body);
+			res.status(200).send(result)
+		})
 	// app.route('/:pid')
 	// 	.put(apiMiddleware.requireUser, function(req, res) {
 	// 		if (!utils.checkRequired(['content'], req, res)) {
