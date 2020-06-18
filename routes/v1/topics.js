@@ -216,7 +216,7 @@ module.exports = function (middleware) {
 				checkNumberInt('offset', offset);
 				checkNumberInt('tid', tid);
 			} catch (e) {
-				res.status(400).send({message: e})
+				return res.status(400).send({message: e})
 			}
 			if (!limit) {
 				limit = 5;
