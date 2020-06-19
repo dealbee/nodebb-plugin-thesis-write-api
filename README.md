@@ -199,7 +199,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * **Accepts**: No parameters
             * Xóa các tag của topic
     * `/pinned-topics`    
-        * `GET /pin`
+        * `GET /`
             * Lấy thông tin tất cả topic đang được pin
             * **Required**: Bearer token
             * **Response**: Mảng các bài viết được ghim được sắp xếp tăng dần theo vị trí, trường `_key` có dạng `pindealbee:{area id}:{position id}`
