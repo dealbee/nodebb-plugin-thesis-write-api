@@ -162,48 +162,52 @@ module.exports = function (middleware) {
 				} catch (e) {
 					res.status(400).send({message: e});
 				}
-
-				let topic = await db.client.collection('objects')
-					.aggregate([
-						{
-							$addFields: {
-								mainPostKey: {
-									$concat: ['post:', '$mainPid']
-								},
-								categoryKey: {
-									$concat: ['category:', {$toString: '$cid'}]
+				try {
+					let topic = await db.client.collection('objects')
+						.aggregate([
+							{
+								$addFields: {
+									mainPostKey: {
+										$concat: ['post:', {$toString: '$mainPid'}]
+									},
+									categoryKey: {
+										$concat: ['category:', {$toString: '$cid'}]
+									}
 								}
+							},
+							{
+								$lookup: {
+									from: 'objects',
+									localField: 'mainPostKey',
+									foreignField: '_key',
+									as: 'mainPost'
+								}
+							},
+							{
+								$unwind: '$mainPost'
+							},
+							{
+								$lookup: {
+									from: 'objects',
+									localField: 'categoryKey',
+									foreignField: '_key',
+									as: 'category'
+								}
+							},
+							{
+								$match: {_key: `topic:${tid}`}
 							}
-						},
-						{
-							$lookup: {
-								from: 'objects',
-								localField: 'mainPostKey',
-								foreignField: '_key',
-								as: 'mainPost'
-							}
-						},
-						{
-							$unwind: '$mainPost'
-						},
-						{
-							$lookup: {
-								from: 'objects',
-								localField: 'categoryKey',
-								foreignField: '_key',
-								as: 'category'
-							}
-						},
-						{
-							$match: {_key: `topic:${tid}`}
-						}
-					]).toArray();
-				topic = topic[0];
-				topic.categoryName = topic.category[0].name;
-				delete topic.category;
-				delete topic.categoryKey;
-				delete topic.mainPostKey;
-				res.status(200).send(topic);
+						]).toArray();
+
+					topic = topic[0];
+					topic.categoryName = topic.category[0].name;
+					delete topic.category;
+					delete topic.categoryKey;
+					delete topic.mainPostKey;
+					return res.status(200).send(topic);
+				} catch (e) {
+					return res.status(400).send({message: "Invalid tid"})
+				}
 			}
 		})
 	app.route('/:tid/posts')
