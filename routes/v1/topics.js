@@ -239,6 +239,7 @@ module.exports = function (middleware) {
 						{tid: parseInt(tid)}
 					]
 				})
+				.sort({timestamp: 1})
 				.limit(limit)
 				.skip(offset)
 				.toArray();

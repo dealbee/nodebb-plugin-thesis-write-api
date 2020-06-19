@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-thesis-write-api",
-  "version": "6.0.6",
+  "version": "6.0.7",
   "description": "Write-enabled API for NodeBB",
   "main": "index.js",
   "scripts": {
