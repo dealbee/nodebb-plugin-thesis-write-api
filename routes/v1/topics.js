@@ -210,6 +210,37 @@ module.exports = function (middleware) {
 				}
 			}
 		})
+	app.route('/:tid/update-images')
+		.put(apiMiddleware.checkLoggedIn, async function (req, res) {
+			if (req.body.isAdd === false) {
+				try{
+					let tid = req.params.tid;
+					checkNumberInt(tid);
+					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
+					data = data[0];
+					data.images = data.images.filter(e=>{
+						if(req.body.paths.indexOf(e) == -1)
+							return e;
+					})
+					await db.client.collection('objects').save(data);
+					res.status(200).send(data)
+				}catch (e) {
+					res.status(400).send({message: e})
+				}
+			} else {
+				try {
+					let tid = req.params.tid;
+					checkNumberInt(tid);
+					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
+					data = data[0];
+					data.images = [...data.images, ...req.body.paths];
+					await db.client.collection('objects').save(data);
+					res.status(200).send(data)
+				} catch (e) {
+					res.status(400).send({message: e})
+				}
+			}
+		})
 	app.route('/:tid/posts')
 		.get(async function (req, res) {
 			let limit = req.query.limit;

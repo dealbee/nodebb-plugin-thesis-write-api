@@ -17,5 +17,13 @@ module.exports = function(/*middleware*/) {
       uploadController.uploadFile(req.user.uid, uploadedFile, callback);
     }, next);
   });
+	app.route('/upload-images').post(apiMiddleware.checkLoggedIn, multipart(), function(req, res, next){
+		uploadController.upload(req, res, function(uploadedFile, callback){
+			if(parseInt(meta.config.allowFileUploads) !== 1){
+				return callback(new Error('[[error:uploads-are-disabled]]'));
+			}
+			uploadController.uploadFile(req.user.uid, uploadedFile, callback);
+		}, next);
+	});
   return app;
 }

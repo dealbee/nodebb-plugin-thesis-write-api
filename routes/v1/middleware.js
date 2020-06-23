@@ -336,6 +336,13 @@ Middleware.checkOptionalData = function (req, res, next) {
 	req.body.optionalData = obj;
 	next();
 }
+Middleware.checkLoggedIn = function (req, res, next) {
+	let uid = parseInt(req.user.uid);
+	let loggedIn = req.loggedIn;
+	if (uid <=0 || !loggedIn)
+		return res.status(400).send('Require logged in user')
+	next();
+}
 var checkNumberInt = function (name, a) {
 	if (a) {
 		var num = parseFloat(a)
