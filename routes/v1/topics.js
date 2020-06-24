@@ -233,11 +233,17 @@ module.exports = function (middleware) {
 					checkNumberInt(tid);
 					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
 					data = data[0];
-					data.images = [...data.images, ...req.body.paths];
+					if(data.images)
+					{
+						data.images = [...data.images, ...req.body.paths];
+					}
+					else{
+						data.images = req.body.paths;
+					}
 					await db.client.collection('objects').save(data);
 					res.status(200).send(data)
 				} catch (e) {
-					res.status(400).send({message: e})
+					res.status(400).send({message: e.message})
 				}
 			}
 		})
