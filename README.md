@@ -206,7 +206,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
     * `/posts`
         * `POST /`
             * Thêm một comment (post) cho một topic
-            * **Requires**: Bearer token, `uid` (người đăng comment), `tid` (topic được comment), `content`
+            * **Requires**: `uid` (người đăng comment), `tid` (topic được comment), `content`
             * **Accepts**: `timestamp` chuỗi milisecond
             * **Response**: Thông tin của comment vừa tạo
         * `PUT /:pid`
@@ -219,7 +219,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
         * `POST /:pid/vote`
             * Votes cho 1 post
             * **Requires**: `delta`
-            * `delta` must be a number. If `delta > 0`, it's considered an upvote; if `delta < 0`, it's considered a downvote; otherwise, it's an unvote.
+            * `delta` là một con số. Nếu `delta > 0`, thì được xem là upvotes, nếu `delta < 0`, thì được xem là downvotes, còn lại là unvote.
         * `DELETE /:pid/vote`
             * Unvotes cho 1 post
             * **Accepts**: No parameters
