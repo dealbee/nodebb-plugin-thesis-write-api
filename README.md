@@ -217,12 +217,12 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * Deletes post (**Cẩn trọng**: Không có các thông báo xác nhận!)
             * **Accepts**: No parameters
         * `POST /:pid/vote`
-            * Votes cho 1 post
-            * **Requires**: `delta`
+            * Votes cho 1 post có `pid`
+            * **Requires**: `delta`, `uid` người vote
             * `delta` là một con số. Nếu `delta > 0`, thì được xem là upvotes, nếu `delta < 0`, thì được xem là downvotes, còn lại là unvote.
         * `DELETE /:pid/vote`
             * Unvotes cho 1 post
-            * **Accepts**: No parameters
+            * **Required**: `uid` của người unvote
     * `/util`
       * `POST /upload`
       * Uploads 1 File
