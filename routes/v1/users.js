@@ -9,17 +9,15 @@ const Users = require.main.require('./src/user'),
 	utils = require('./utils'),
 	async = require.main.require('async'),
 	request = require.main.require('request'),
-	nconf = require.main.require('nconf'),
 	db = require.main.require('./src/database'),
 	controllers = require.main.require('./src/controllers/api');
-const expiredTimeForCookie = 1000 * 60 * 60 * 24 * 30;
-
+const EXPIRED_TIME_FOR_COOKIE = 1000 * 60 * 60 * 24 * 30;
 module.exports = function (/*middleware*/) {
 	var app = require('express').Router();
 	app.post('/login', async function (req, res) {
 		let jar = request.jar();
 		request({
-			url: nconf.get('url') + nconf.get('relative_path') + '/api/config',
+			url: utils.URL + '/api/config',
 			json: true,
 			jar: jar
 		}, function (err, response, body) {
@@ -27,7 +25,7 @@ module.exports = function (/*middleware*/) {
 				return res.status(400).send(err);
 			}
 
-			request.post(nconf.get('url') + nconf.get('relative_path') + '/login', {
+			request.post(utils.URL + '/login', {
 				form: {
 					username: req.body.username,
 					password: req.body.password,
@@ -41,16 +39,18 @@ module.exports = function (/*middleware*/) {
 				if (!body.header) {
 					return res.status(400).send({message: "Login fail"})
 				} else {
-					let cookies = jar.getCookies(nconf.get('url'));
+					let cookies = jar.getCookies(utils.URL);
 					cookies.forEach(e => {
 						if (e.key === "express.sid") {
 							let now = new Date();
 							let time = now.getTime();
-							let expireTime = time + expiredTimeForCookie;
+							let expireTime = time + EXPIRED_TIME_FOR_COOKIE;
 							now.setTime(expireTime);
 							res.setHeader("Set-Cookie", `${e.key}=${e.value}; Path=/; HttpOnly; Expires=${now.toGMTString()}`)
 						}
 					})
+					let responseBody = utils.removeProperties(body.header.user,["uploadedpicture"])
+					responseBody = utils.replaceProperties(responseBody,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					return res.send(body.header.user)
 				}
 			});
@@ -85,7 +85,8 @@ module.exports = function (/*middleware*/) {
 			let propsToRemove=["gdpr_consent","password","rss_token","uploadedpicture","_id"];
 			try{
 				let userInfo = await db.client.collection("objects").find({_key: `user:${req.params.uid}`}).toArray();
-				userInfo = utils.removeProperty(userInfo[0], propsToRemove);
+				userInfo = utils.removeProperties(userInfo[0], propsToRemove);
+				userInfo = utils.replaceProperties(userInfo,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 				return res.status(200).send(userInfo);
 			}catch (e) {
 				return res.status(400).send({message:e})

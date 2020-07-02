@@ -4,7 +4,7 @@
 var apiMiddleware = require('./middleware'),
 	errorHandler = require('../../lib/errorHandler'),
 	plugins = require.main.require('./src/plugins'),
-	nconf = require.main.require('nconf'),
+	utils = require('./utils'),
 	writeApi = module.parent.parent.exports;
 
 module.exports = function (app, coreMiddleware) {
@@ -30,8 +30,8 @@ module.exports = function (app, coreMiddleware) {
 			code: 'ok',
 			message: 'pong',
 			params: {
-				url: nconf.get('url'),
-				relativePath: nconf.get('relative_path')
+				url: utils.URL,
+				relativePath: utils.RELATIVE_PATH
 			},
 		});
 	});

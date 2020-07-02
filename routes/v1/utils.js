@@ -1,10 +1,13 @@
 'use strict';
 /* globals module, require */
-
-var errorHandler = require('../../lib/errorHandler.js'),
-
+const nconf = require.main.require('nconf');
+const errorHandler = require('../../lib/errorHandler.js'),
 	Utils = {};
-
+Utils.URL = nconf.get('url');
+Utils.RELATIVE_PATH = nconf.get('relative_path');
+Utils.UPLOAD_PATH = "/assets/uploads/";
+Utils.REPLACE_UPLOAD_PATH = Utils.URL + Utils.UPLOAD_PATH;
+Utils.PROPS_REPLACE_USER = ["picture","uploadedpicture","cover:url"]
 Utils.checkRequired = function (required, req, res) {
 	var missing = [];
 	for (var x = 0, numRequired = required.length; x < numRequired; x++) {
@@ -26,7 +29,7 @@ Utils.checkRequired = function (required, req, res) {
 		return false;
 	}
 };
-Utils.removeProperty = function (obj, props) {//object and string array
+Utils.removeProperties = function (obj, props) {//object and string array
 	try {
 		props.forEach(prop => {
 			if (obj[prop]) {
@@ -34,6 +37,18 @@ Utils.removeProperty = function (obj, props) {//object and string array
 			}
 		})
 		return obj
+	} catch (e) {
+		throw e;
+	}
+}
+Utils.replaceProperties = function (obj, propsToReplace, target, replace) {
+	try {
+		propsToReplace.forEach(propsToReplace => {
+			if (obj[propsToReplace] && typeof (obj[propsToReplace]) === 'string') {
+				obj[propsToReplace] = obj[propsToReplace].replace(target, replace)
+			}
+		})
+		return obj;
 	} catch (e) {
 		throw e;
 	}

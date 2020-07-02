@@ -201,12 +201,19 @@ module.exports = function (middleware) {
 
 					topic = topic[0];
 					topic.categoryName = topic.category[0].name;
-					delete topic.category;
-					delete topic.categoryKey;
-					delete topic.mainPostKey;
+					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
+					topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					topic.mainPost = utils.replaceProperties(topic.mainPost, ["content"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					if (topic.images) {
+						topic.images = topic.images.map(image => {
+							image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
+							return image
+						})
+					}
 					return res.status(200).send(topic);
 				} catch (e) {
-					return res.status(400).send({message: "Invalid tid"})
+					console.log(e)
+					return res.status(400).send({message: "Invalid tid or cannot get data"})
 				}
 			}
 		})
@@ -305,11 +312,12 @@ module.exports = function (middleware) {
 					}
 				])
 				.toArray();
-			let removePropComment = ["userKey","_id"];
-			let removePropUser = ["gdpr_consent", "password", "rss_token", "uploadedpicture","_id"];
+			let removePropComment = ["userKey", "_id"];
+			let removePropUser = ["gdpr_consent", "password", "rss_token", "uploadedpicture", "_id"];
 			comments = comments.map(comment => {
-				comment = utils.removeProperty(comment, removePropComment);
-				comment.user = utils.removeProperty(comment.user[0], removePropUser)
+				comment = utils.removeProperties(comment, removePropComment);
+				comment.user = utils.removeProperties(comment.user[0], removePropUser)
+				comment.user = utils.replaceProperties(comment.user, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 				return comment;
 			})
 			return res.status(200).send(comments)
