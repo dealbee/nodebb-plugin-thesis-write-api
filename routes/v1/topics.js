@@ -213,18 +213,18 @@ module.exports = function (middleware) {
 	app.route('/:tid/update-images')
 		.put(apiMiddleware.checkLoggedIn, async function (req, res) {
 			if (req.body.isAdd === false) {
-				try{
+				try {
 					let tid = req.params.tid;
 					checkNumberInt(tid);
 					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
 					data = data[0];
-					data.images = data.images.filter(e=>{
-						if(req.body.paths.indexOf(e) == -1)
+					data.images = data.images.filter(e => {
+						if (req.body.paths.indexOf(e) == -1)
 							return e;
 					})
 					await db.client.collection('objects').save(data);
 					res.status(200).send(data)
-				}catch (e) {
+				} catch (e) {
 					res.status(400).send({message: e})
 				}
 			} else {
@@ -233,11 +233,9 @@ module.exports = function (middleware) {
 					checkNumberInt(tid);
 					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
 					data = data[0];
-					if(data.images)
-					{
+					if (data.images) {
 						data.images = [...data.images, ...req.body.paths];
-					}
-					else{
+					} else {
 						data.images = req.body.paths;
 					}
 					await db.client.collection('objects').save(data);
@@ -274,16 +272,46 @@ module.exports = function (middleware) {
 			}
 			offset++; // ignore main post
 			let comments = await db.client.collection('objects')
-				.find({
-					$and: [
-						{_key: /^post:/},
-						{tid: parseInt(tid)}
-					]
-				})
-				.sort({timestamp: 1})
-				.limit(limit)
-				.skip(offset)
+				.aggregate([
+					{
+						$addFields: {
+							userKey: {
+								$concat: ['user:', {$toString: '$uid'}]
+							}
+						}
+					},
+					{
+						$lookup: {
+							from: 'objects',
+							localField: 'userKey',
+							foreignField: '_key',
+							as: 'user'
+						}
+					},
+					{
+						$match: {
+							_key: /^post:/,
+							tid: parseInt(tid)
+						}
+					},
+					{
+						$sort: {timestamp: 1}
+					},
+					{
+						$limit: limit
+					},
+					{
+						$skip: offset
+					}
+				])
 				.toArray();
+			let removePropComment = ["userKey","_id"];
+			let removePropUser = ["gdpr_consent", "password", "rss_token", "uploadedpicture","_id"];
+			comments = comments.map(comment => {
+				comment = utils.removeProperty(comment, removePropComment);
+				comment.user = utils.removeProperty(comment.user[0], removePropUser)
+				return comment;
+			})
 			return res.status(200).send(comments)
 		})
 

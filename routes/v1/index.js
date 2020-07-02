@@ -4,10 +4,11 @@
 var apiMiddleware = require('./middleware'),
 	errorHandler = require('../../lib/errorHandler'),
 	plugins = require.main.require('./src/plugins'),
+	nconf = require.main.require('nconf'),
 	writeApi = module.parent.parent.exports;
 
-module.exports = function(app, coreMiddleware) {
-	app.use(function(req, res, next) {
+module.exports = function (app, coreMiddleware) {
+	app.use(function (req, res, next) {
 		if (writeApi.settings.requireHttps === 'on' && req.protocol !== 'https') {
 			res.set('Upgrade', 'TLS/1.0, HTTP/1.1');
 			return errorHandler.respond(426, res);
@@ -24,20 +25,23 @@ module.exports = function(app, coreMiddleware) {
 	app.use('/util', require('./util')(coreMiddleware));
 	app.use('/pinned-topics', require('./pinnedTopics')(coreMiddleware));
 
-	app.get('/ping', function(req, res) {
+	app.get('/ping', function (req, res) {
 		res.status(200).json({
 			code: 'ok',
 			message: 'pong',
-			params: {}
+			params: {
+				url: nconf.get('url'),
+				relativePath: nconf.get('relative_path')
+			},
 		});
 	});
 
-	app.post('/ping', apiMiddleware.requireUser, function(req, res) {
+	app.post('/ping', function (req, res) {
 		res.status(200).json({
 			code: 'ok',
-			message: 'pong, accepted test POST ping for uid ' + req.user.uid,
+			message: 'pong, accepted test POST ping for uid ' + req.uid,
 			params: {
-				uid: req.user.uid
+				uid: req.uid
 			}
 		});
 	});
@@ -49,10 +53,10 @@ module.exports = function(app, coreMiddleware) {
 		apiMiddleware: apiMiddleware,
 		middleware: coreMiddleware,
 		errorHandler: errorHandler
-	}, function(err, payload) {
+	}, function (err, payload) {
 		app.use('/', payload.router);
 
-		app.use(function(req, res) {
+		app.use(function (req, res) {
 			// Catch-all
 			errorHandler.respond(404, res);
 		});

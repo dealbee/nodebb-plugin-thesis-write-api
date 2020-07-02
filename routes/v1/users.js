@@ -1,17 +1,61 @@
 'use strict';
 /* globals module, require */
 
-var Users = require.main.require('./src/user'),
+const Users = require.main.require('./src/user'),
 	Messaging = require.main.require('./src/messaging'),
 	apiMiddleware = require('./middleware'),
 	errorHandler = require('../../lib/errorHandler'),
 	auth = require('../../lib/auth'),
 	utils = require('./utils'),
-	async = require.main.require('async');
+	async = require.main.require('async'),
+	request = require.main.require('request'),
+	nconf = require.main.require('nconf'),
+	db = require.main.require('./src/database'),
+	controllers = require.main.require('./src/controllers/api');
+const expiredTimeForCookie = 1000 * 60 * 60 * 24 * 30;
 
-
-module.exports = function(/*middleware*/) {
+module.exports = function (/*middleware*/) {
 	var app = require('express').Router();
+	app.post('/login', async function (req, res) {
+		let jar = request.jar();
+		request({
+			url: nconf.get('url') + nconf.get('relative_path') + '/api/config',
+			json: true,
+			jar: jar
+		}, function (err, response, body) {
+			if (err) {
+				return res.status(400).send(err);
+			}
+
+			request.post(nconf.get('url') + nconf.get('relative_path') + '/login', {
+				form: {
+					username: req.body.username,
+					password: req.body.password,
+				},
+				json: true,
+				jar: jar,
+				headers: {
+					'x-csrf-token': body.csrf_token,
+				},
+			}, function (err, response, body) {
+				if (!body.header) {
+					return res.status(400).send({message: "Login fail"})
+				} else {
+					let cookies = jar.getCookies(nconf.get('url'));
+					cookies.forEach(e => {
+						if (e.key === "express.sid") {
+							let now = new Date();
+							let time = now.getTime();
+							let expireTime = time + expiredTimeForCookie;
+							now.setTime(expireTime);
+							res.setHeader("Set-Cookie", `${e.key}=${e.value}; Path=/; HttpOnly; Expires=${now.toGMTString()}`)
+						}
+					})
+					return res.send(body.header.user)
+				}
+			});
+		});
+	})
 	// app.post('/', apiMiddleware.requireUser, apiMiddleware.requireAdmin, function(req, res) {
 	// 	if (!utils.checkRequired(['username'], req, res)) {
 	// 		return false;
@@ -24,19 +68,29 @@ module.exports = function(/*middleware*/) {
 	// 	});
 	// });
 	//
-	// app.route('/:uid')
-	// 	.put(apiMiddleware.requireUser, apiMiddleware.exposeAdmin, function(req, res) {
-	// 		if (parseInt(req.params.uid, 10) !== parseInt(req.user.uid, 10) && !res.locals.isAdmin) {
-	// 			return errorHandler.respond(401, res);
-	// 		}
-	//
-	// 		// `uid` in `updateProfile` refers to calling user, not target user
-	// 		req.body.uid = req.params.uid;
-	//
-	// 		Users.updateProfile(req.user.uid, req.body, function(err) {
-	// 			return errorHandler.handle(err, res);
-	// 		});
-	// 	})
+	app.route('/:uid')
+		// .put(apiMiddleware.requireUser, apiMiddleware.exposeAdmin, function(req, res) {
+		// 	if (parseInt(req.params.uid, 10) !== parseInt(req.user.uid, 10) && !res.locals.isAdmin) {
+		// 		return errorHandler.respond(401, res);
+		// 	}
+		//
+		// 	// `uid` in `updateProfile` refers to calling user, not target user
+		// 	req.body.uid = req.params.uid;
+		//
+		// 	Users.updateProfile(req.user.uid, req.body, function(err) {
+		// 		return errorHandler.handle(err, res);
+		// 	});
+		// })
+		.get(async function (req, res) {
+			let propsToRemove=["gdpr_consent","password","rss_token","uploadedpicture","_id"];
+			try{
+				let userInfo = await db.client.collection("objects").find({_key: `user:${req.params.uid}`}).toArray();
+				userInfo = utils.removeProperty(userInfo[0], propsToRemove);
+				return res.status(200).send(userInfo);
+			}catch (e) {
+				return res.status(400).send({message:e})
+			}
+		})
 	// 	.delete(apiMiddleware.requireUser, apiMiddleware.exposeAdmin, function(req, res) {
 	// 		if (parseInt(req.params.uid, 10) !== parseInt(req.user.uid, 10) && !res.locals.isAdmin) {
 	// 			return errorHandler.respond(401, res);

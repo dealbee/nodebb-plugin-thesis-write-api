@@ -48,6 +48,10 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
 
 * `/api/dealbee`
     * `/users`
+        * `POST /login`
+            * Đăng nhập
+            * **Requires**: `username`, `password`
+            * Trả về cookies được gắn ở header, và [các thông tin](./asset/dataUserLogin.json) của người dùng
         * `POST /`
             * Tạo người dùng mới
             * **Requires**: `username`

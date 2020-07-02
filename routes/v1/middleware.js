@@ -337,6 +337,7 @@ Middleware.checkOptionalData = function (req, res, next) {
 	next();
 }
 Middleware.checkLoggedIn = function (req, res, next) {
+	console.log(req)
 	let uid = parseInt(req.user.uid);
 	let loggedIn = req.loggedIn;
 	if (uid <=0 || !loggedIn)

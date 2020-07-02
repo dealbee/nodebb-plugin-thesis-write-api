@@ -5,9 +5,9 @@ var errorHandler = require('../../lib/errorHandler.js'),
 
 	Utils = {};
 
-Utils.checkRequired = function(required, req, res) {
+Utils.checkRequired = function (required, req, res) {
 	var missing = [];
-	for(var x=0,numRequired=required.length;x<numRequired;x++) {
+	for (var x = 0, numRequired = required.length; x < numRequired; x++) {
 		if (!req.body.hasOwnProperty(required[x])) {
 			missing.push(required[x]);
 		}
@@ -26,5 +26,16 @@ Utils.checkRequired = function(required, req, res) {
 		return false;
 	}
 };
-
+Utils.removeProperty = function (obj, props) {//object and string array
+	try {
+		props.forEach(prop => {
+			if (obj[prop]) {
+				delete obj[prop]
+			}
+		})
+		return obj
+	} catch (e) {
+		throw e;
+	}
+}
 module.exports = Utils;
