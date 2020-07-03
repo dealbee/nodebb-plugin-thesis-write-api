@@ -47,9 +47,9 @@ module.exports = function (middleware) {
 			let objSorted = {$sort: null};
 
 			try {
-				checkNumberInt('category id', cid)
-				checkNumberInt('limit', limit)
-				checkNumberInt('offset', skip)
+				utils.checkNumberInt('category id', cid)
+				utils.checkNumberInt('limit', limit)
+				utils.checkNumberInt('offset', skip)
 			} catch (e) {
 				return res.status(400).send({message: e})
 			}
@@ -140,10 +140,14 @@ module.exports = function (middleware) {
 					},
 					{
 						$sort: objSorted.$sort
+					},
+					{
+						$skip: skip
+					},
+					{
+						$limit: limit
 					}
 				])
-				.limit(limit)
-				.skip(skip)
 				.toArray();
 			topics = topics.map(topic => {
 				topic.categoryName = topic.category[0].name;
@@ -164,7 +168,7 @@ module.exports = function (middleware) {
 			{
 				let tid = req.params.tid;
 				try {
-					checkNumberInt('tid', tid)
+					utils.checkNumberInt('tid', tid)
 				} catch (e) {
 					return res.status(400).send({message: e});
 				}
@@ -193,12 +197,30 @@ module.exports = function (middleware) {
 								$unwind: '$mainPost'
 							},
 							{
+								$addFields: {
+									userKey: {
+										$concat: ['user:', {$toString: '$uid'}]
+									}
+								}
+							},
+							{
 								$lookup: {
 									from: 'objects',
 									localField: 'categoryKey',
 									foreignField: '_key',
 									as: 'category'
 								}
+							},
+							{
+								$lookup: {
+									from: 'objects',
+									localField: 'userKey',
+									foreignField: '_key',
+									as: 'user'
+								}
+							},
+							{
+								$unwind: '$user'
 							},
 							{
 								$match: {_key: `topic:${tid}`, locked: {$ne: 1}}
@@ -209,9 +231,13 @@ module.exports = function (middleware) {
 					}
 					topic = topic[0];
 					topic.categoryName = topic.category[0].name;
-					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
 					topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					topic.mainPost = utils.replaceProperties(topic.mainPost, ["content"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					let propsToRemove=["gdpr_consent","password","rss_token","uploadedpicture","_id"];
+					topic.user = utils.removeProperties(topic.user, propsToRemove);
+					topic.user = utils.replaceProperties(topic.user,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					topic.mainPost.user = topic.user;
+					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey","userKey","user"])
 					if (topic.images && topic.images.length > 0) {
 						topic.images = topic.images.map(image => {
 							image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
@@ -220,6 +246,7 @@ module.exports = function (middleware) {
 					}
 					return res.status(200).send(topic)
 				} catch (e) {
+					console.log(e)
 					if (e == 'Topic is locked or deleted') {
 						return res.status(400).send({message: e})
 					} else {
@@ -233,7 +260,7 @@ module.exports = function (middleware) {
 			if (req.body.isAdd === false) {
 				try {
 					let tid = req.params.tid;
-					checkNumberInt(tid);
+					utils.checkNumberInt(tid);
 					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
 					data = data[0];
 					data.images = data.images.filter(e => {
@@ -248,7 +275,7 @@ module.exports = function (middleware) {
 			} else {
 				try {
 					let tid = req.params.tid;
-					checkNumberInt(tid);
+					utils.checkNumberInt(tid);
 					let data = await db.client.collection('objects').find({_key: `topic:${tid}`}).toArray();
 					data = data[0];
 					if (data.images) {
@@ -269,9 +296,9 @@ module.exports = function (middleware) {
 			let offset = req.query.offset;
 			let tid = req.params.tid;
 			try {
-				checkNumberInt('limit', limit);
-				checkNumberInt('offset', offset);
-				checkNumberInt('tid', tid);
+				utils.checkNumberInt('limit', limit);
+				utils.checkNumberInt('offset', offset);
+				utils.checkNumberInt('tid', tid);
 			} catch (e) {
 				return res.status(400).send({message: e})
 			}
@@ -446,15 +473,3 @@ module.exports = function (middleware) {
 
 	return app;
 };
-var checkNumberInt = function (name, a) {
-	if (a) {
-		var num = parseFloat(a)
-		if (isNaN(num)) {
-			throw `Invalid ${name}`
-		} else {
-			if (num % 1 > 0 || num < 0) {
-				throw `Invalid ${name}`
-			}
-		}
-	}
-}

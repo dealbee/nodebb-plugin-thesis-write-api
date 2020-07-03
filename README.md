@@ -51,10 +51,15 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
         * `POST /login`
             * Đăng nhập
             * **Requires**: `username`, `password`
-            * Trả về cookies được gắn ở header, và [các thông tin](./asset/dataUserLogin.json) của người dùng
+            * **Response**: cookies được gắn ở header, và [các thông tin](./asset/dataUserLogin.json) của người dùng
         * `GET /:uid`
             * Lấy thông tin của người dùng
-            * Trả về [các thông tin](./asset/dataUser.json) của người dùng
+            * **Response**: [các thông tin](./asset/dataUser.json) của người dùng
+        * `GET /:uid/topics`
+            * Lấy thông tin các topics thuộc về `uid`
+            * Trả về thông tin các topic
+            * **Accepts**: `limit`, `offset`
+            * **Response**: [Các thông tin chi tiết](./asset/dataTopics.json) của các bài đăng ở dạng array object JSON
         * `POST /`
             * Tạo người dùng mới
             * **Requires**: `username`
@@ -154,7 +159,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
              * `cid` id của chủ đề cần lọc
              * `flashdeal` chỉ lấy flashdeal trong vòng 24H (`true` hay `false`)
              * `limit` đi kèm cùng `offset` để phân trang
-            * **Response**: [Các thông tin chi tiết](./asset/dataTopic.json) của các bài đăng ở dạng array object JSON
+            * **Response**: [Các thông tin chi tiết](./asset/dataTopics.json) của các bài đăng ở dạng array object JSON
         * `GET /:tid`
             * Lấy thông tin cuả topic có `tid`
             * **Response**: Thông tin chi tiết của topic có `tid`, bao gồm thông tin chi tiết của main post, chứa ở trường `mainPost`

@@ -54,4 +54,16 @@ Utils.replaceProperties = function (obj, propsToReplace, target, replace) {
 		throw e;
 	}
 }
+Utils.checkNumberInt = function (name, a) {
+	if (a) {
+		var num = parseFloat(a)
+		if (isNaN(num)) {
+			throw `Invalid ${name}`
+		} else {
+			if (num % 1 > 0 || num < 0) {
+				throw `Invalid ${name}`
+			}
+		}
+	}
+}
 module.exports = Utils;

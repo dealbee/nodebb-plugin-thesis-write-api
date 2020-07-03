@@ -26,12 +26,11 @@
   "timestamp": 1592711372913,
   "title": "Harry Potter and the Goblet of Fire: The Illustrated Edition (Hardcover Book)",
   "uid": 3,
-  "viewcount": 31,
+  "viewcount": 32,
   "teaserPid": 50,
   "images": [
 	"http://127.0.0.1:4567/assets/uploads/files/1592848227777-11.jpg",
-	"https://i.pinimg.com/originals/7b/bb/19/7bbb19a5afada8428f3921233f91be4f.jpg",
-	"http://127.0.0.1:4567/assets/uploads/files/1593621215938-13.jpg"
+	"https://i.pinimg.com/originals/7b/bb/19/7bbb19a5afada8428f3921233f91be4f.jpg"
   ],
   "locked": 0,
   "mainPost": {
@@ -45,13 +44,39 @@
 	"deleted": 0,
 	"deleterUid": 0,
 	"downvotes": 0,
-	"edited": 1593713607725,
-	"editedISO": "2020-06-28T16:09:53.577Z",
+	"edited": 1593750629881,
+	"editedISO": "2020-07-02T18:13:27.725Z",
 	"editor": 3,
 	"timestampISO": "2020-06-21T03:49:32.913Z",
 	"upvotes": 0,
 	"votes": 0,
-	"replies": 1
+	"replies": 1,
+	"user": {
+	  "_key": "user:3",
+	  "email": "lam.bao.anh@gmail.com",
+	  "joindate": 1585668332530,
+	  "lastonline": 1593768242304,
+	  "status": "online",
+	  "uid": "3",
+	  "username": "lambaoanh",
+	  "userslug": "lambaoanh",
+	  "topiccount": 5,
+	  "postcount": 6,
+	  "lastposttime": 1592711372913,
+	  "picture": "http://127.0.0.1:4567/assets/uploads/profile/3-profileavatar.png",
+	  "reputation": 11,
+	  "profileviews": 14,
+	  "fullname": "Lâm Bảo Anh",
+	  "lastqueuetime": 1587565015609,
+	  "website": "https://www.facebook.com/lamcuongdat",
+	  "location": "Address",
+	  "signature": "lambaoanh-signature",
+	  "groupTitle": "[\"\"]",
+	  "aboutme": "Introduce my self",
+	  "birthday": "07/06/1998",
+	  "cover:url": "http://127.0.0.1:4567/assets/uploads/profile/3-profilecover.jpeg",
+	  "cover:position": "50.0263% 23.3807%"
+	}
   },
   "categoryName": "Thảo luận chung"
 }

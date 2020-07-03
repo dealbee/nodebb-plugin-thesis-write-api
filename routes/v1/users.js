@@ -49,8 +49,8 @@ module.exports = function (/*middleware*/) {
 							res.setHeader("Set-Cookie", `${e.key}=${e.value}; Path=/; HttpOnly; Expires=${now.toGMTString()}`)
 						}
 					})
-					let responseBody = utils.removeProperties(body.header.user,["uploadedpicture"])
-					responseBody = utils.replaceProperties(responseBody,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					let responseBody = utils.removeProperties(body.header.user, ["uploadedpicture"])
+					responseBody = utils.replaceProperties(responseBody, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					return res.send(body.header.user)
 				}
 			});
@@ -82,15 +82,91 @@ module.exports = function (/*middleware*/) {
 		// 	});
 		// })
 		.get(async function (req, res) {
-			let propsToRemove=["gdpr_consent","password","rss_token","uploadedpicture","_id"];
-			try{
+			let propsToRemove = ["gdpr_consent", "password", "rss_token", "uploadedpicture", "_id"];
+			try {
 				let userInfo = await db.client.collection("objects").find({_key: `user:${req.params.uid}`}).toArray();
 				userInfo = utils.removeProperties(userInfo[0], propsToRemove);
-				userInfo = utils.replaceProperties(userInfo,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+				userInfo = utils.replaceProperties(userInfo, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 				return res.status(200).send(userInfo);
-			}catch (e) {
-				return res.status(400).send({message:e})
+			} catch (e) {
+				return res.status(400).send({message: e})
 			}
+		})
+	app.route('/:uid/topics')
+		.get(async function (req, res) {
+			let uid = req.params.uid;
+			let limit = req.query.limit;
+			let skip = req.query.offset;
+
+			try {
+				utils.checkNumberInt('limit', limit)
+				utils.checkNumberInt('offset', skip)
+			} catch (e) {
+				return res.status(400).send({message: e})
+			}
+			let objFind = {_key: /^topic:/, locked: {$ne: 1}, uid: parseInt(uid)};
+			let objSorted = {$sort: null};
+
+			objSorted.$sort = {timestamp: 1}
+
+			if (limit) {
+				limit = parseInt(limit);
+				if (limit > 50) {
+					limit = 50;
+				}
+			} else {
+				limit = 5;
+			}
+
+			if (skip) {
+				skip = parseInt(skip);
+			} else {
+				skip = 0;
+			}
+			let topics = await db.client.collection('objects')
+				.aggregate([
+					{
+						$addFields: {
+							categoryKey: {
+								$concat: ['category:', {$toString: '$cid'}]
+							}
+						}
+					},
+					{
+						$lookup: {
+							from: 'objects',
+							localField: 'categoryKey',
+							foreignField: '_key',
+							as: 'category'
+						}
+					},
+					{
+						$match: objFind
+					},
+					{
+						$sort: objSorted.$sort
+					},
+					{
+						$skip: skip
+					},
+					{
+						$limit: limit
+					}
+				])
+				.toArray();
+			topics = topics.map(topic => {
+				topic.categoryName = topic.category[0].name;
+				topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
+				topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+				if (topic.images && topic.images.length > 0) {
+					topic.images = topic.images.map(image => {
+						image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
+						return image
+					})
+				}
+				return topic;
+			})
+			res.status(200).send(topics);
 		})
 	// 	.delete(apiMiddleware.requireUser, apiMiddleware.exposeAdmin, function(req, res) {
 	// 		if (parseInt(req.params.uid, 10) !== parseInt(req.user.uid, 10) && !res.locals.isAdmin) {
