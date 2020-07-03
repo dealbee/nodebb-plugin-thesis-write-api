@@ -147,8 +147,14 @@ module.exports = function (middleware) {
 				.toArray();
 			topics = topics.map(topic => {
 				topic.categoryName = topic.category[0].name;
-				delete topic.category;
-				delete topic.categoryKey;
+				topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
+				topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+				if (topic.images && topic.images.length > 0) {
+					topic.images = topic.images.map(image => {
+						image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
+						return image
+					})
+				}
 				return topic;
 			})
 			res.status(200).send(topics);
@@ -206,12 +212,13 @@ module.exports = function (middleware) {
 					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
 					topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					topic.mainPost = utils.replaceProperties(topic.mainPost, ["content"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
-					if (topic.images) {
+					if (topic.images && topic.images.length > 0) {
 						topic.images = topic.images.map(image => {
 							image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
 							return image
 						})
 					}
+					return res.status(200).send(topic)
 				} catch (e) {
 					if (e == 'Topic is locked or deleted') {
 						return res.status(400).send({message: e})
