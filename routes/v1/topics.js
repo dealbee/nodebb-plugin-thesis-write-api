@@ -43,7 +43,7 @@ module.exports = function (middleware) {
 			let limit = req.query.limit;
 			let skip = req.query.offset;
 
-			let objFind = {_key: /^topic:/};
+			let objFind = {_key: /^topic:/, locked: {$ne: 1}};
 			let objSorted = {$sort: null};
 
 			try {
@@ -160,7 +160,7 @@ module.exports = function (middleware) {
 				try {
 					checkNumberInt('tid', tid)
 				} catch (e) {
-					res.status(400).send({message: e});
+					return res.status(400).send({message: e});
 				}
 				try {
 					let topic = await db.client.collection('objects')
@@ -195,10 +195,12 @@ module.exports = function (middleware) {
 								}
 							},
 							{
-								$match: {_key: `topic:${tid}`}
+								$match: {_key: `topic:${tid}`, locked: {$ne: 1}}
 							}
 						]).toArray();
-
+					if (!topic[0]) {
+						throw "Topic is locked or deleted";
+					}
 					topic = topic[0];
 					topic.categoryName = topic.category[0].name;
 					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
@@ -210,10 +212,12 @@ module.exports = function (middleware) {
 							return image
 						})
 					}
-					return res.status(200).send(topic);
 				} catch (e) {
-					console.log(e)
-					return res.status(400).send({message: "Invalid tid or cannot get data"})
+					if (e == 'Topic is locked or deleted') {
+						return res.status(400).send({message: e})
+					} else {
+						return res.status(400).send({message: "Cannot get data"})
+					}
 				}
 			}
 		})
@@ -232,7 +236,7 @@ module.exports = function (middleware) {
 					await db.client.collection('objects').save(data);
 					res.status(200).send(data)
 				} catch (e) {
-					res.status(400).send({message: e})
+					return res.status(400).send({message: e})
 				}
 			} else {
 				try {
@@ -246,9 +250,9 @@ module.exports = function (middleware) {
 						data.images = req.body.paths;
 					}
 					await db.client.collection('objects').save(data);
-					res.status(200).send(data)
+					return res.status(200).send(data)
 				} catch (e) {
-					res.status(400).send({message: e.message})
+					return res.status(400).send({message: e.message})
 				}
 			}
 		})
