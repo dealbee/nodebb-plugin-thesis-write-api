@@ -166,7 +166,25 @@ module.exports = function (/*middleware*/) {
 				}
 				return topic;
 			})
-			res.status(200).send(topics);
+			let total = await db.client.collection('objects')
+				.aggregate([
+					{
+						$match: objFind
+					},
+					{
+						$count: "total"
+					}
+				]).toArray();
+			total = total[0].total;
+			let result = {
+				limit,
+				offset: skip,
+				total,
+				totalPages : Math.ceil(total / limit),
+				currentPage : Math.floor((skip / limit) + 1),
+				topics,
+			}
+			res.status(200).send(result);
 		})
 	// 	.delete(apiMiddleware.requireUser, apiMiddleware.exposeAdmin, function(req, res) {
 	// 		if (parseInt(req.params.uid, 10) !== parseInt(req.user.uid, 10) && !res.locals.isAdmin) {

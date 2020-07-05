@@ -59,7 +59,7 @@ Khi API gặp lỗi, chương trình sẽ báo lỗi. Các lỗi sẽ được b
             * Lấy thông tin các topics thuộc về `uid`
             * Trả về thông tin các topic
             * **Accepts**: `limit`, `offset`
-            * **Response**: [Các thông tin chi tiết](./asset/dataTopics.json) của các bài đăng ở dạng array object JSON
+            * **Response**: [Các thông tin chi tiết](./asset/dataUserTopics.json) của các bài đăng ở dạng array object JSON
         * `POST /`
             * Tạo người dùng mới
             * **Requires**: `username`

@@ -50,6 +50,11 @@ module.exports = function (middleware) {
 				utils.checkNumberInt('category id', cid)
 				utils.checkNumberInt('limit', limit)
 				utils.checkNumberInt('offset', skip)
+				if (limit){
+					if (limit == '0'){
+						throw "Limit muse be greater than 0"
+					}
+				}
 			} catch (e) {
 				return res.status(400).send({message: e})
 			}
@@ -161,7 +166,25 @@ module.exports = function (middleware) {
 				}
 				return topic;
 			})
-			res.status(200).send(topics);
+			let total = await db.client.collection('objects')
+				.aggregate([
+					{
+						$match: objFind
+					},
+					{
+						$count: "total"
+					}
+				]).toArray();
+			total = total[0].total;
+			let result = {
+				limit,
+				offset: skip,
+				total,
+				totalPages : Math.ceil(total / limit),
+				currentPage : Math.floor((skip / limit) + 1),
+				topics,
+			}
+			res.status(200).send(result);
 		})
 	app.route('/:tid')
 		.get(async function (req, res) {
@@ -299,6 +322,12 @@ module.exports = function (middleware) {
 				utils.checkNumberInt('limit', limit);
 				utils.checkNumberInt('offset', offset);
 				utils.checkNumberInt('tid', tid);
+				if(limit){
+					if(limit === '0')
+					{
+						throw 'Limit must be greater than 0'
+					}
+				}
 			} catch (e) {
 				return res.status(400).send({message: e})
 			}
@@ -358,7 +387,29 @@ module.exports = function (middleware) {
 				comment.user = utils.replaceProperties(comment.user, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 				return comment;
 			})
-			return res.status(200).send(comments)
+
+			let total = await db.client.collection('objects')
+				.aggregate([
+					{
+						$match: {
+							_key: /^post:/,
+							tid: parseInt(tid)
+						}
+					},
+					{
+						$count: "total"
+					}
+				]).toArray();
+			total = total[0].total;
+			let result = {
+				limit,
+				offset,
+				total,
+				totalPages : Math.ceil(total / limit),
+				currentPage : Math.floor((offset / limit) + 1),
+				posts: comments,
+			}
+			return res.status(200).send(result)
 		})
 
 	// app.route('/:tid')
