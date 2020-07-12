@@ -347,7 +347,9 @@ module.exports = function (middleware) {
 			if (limit > 50) {
 				limit = 50;
 			}
-			offset++; // ignore main post
+			if(offset === 0){
+				offset++;
+			}
 			let comments = await db.client.collection('objects')
 				.aggregate([
 					{
