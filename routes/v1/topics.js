@@ -267,9 +267,12 @@ module.exports = function (middleware) {
 							return image
 						})
 					}
+					let votedBy = await db.getSetsMembers([topic.mainPid].map(pid => 'pid:' + pid + ':upvote'));
+					let downvotedBy = await db.getSetsMembers([topic.mainPid].map(pid => 'pid:' + pid + ':downvote'));
+					topic.mainPost.upvotedBy = utils.parseIntArrayString(votedBy[0]);
+					topic.mainPost.downvotedBy = utils.parseIntArrayString(downvotedBy[0]);
 					return res.status(200).send(topic)
 				} catch (e) {
-					console.log(e)
 					if (e == 'Topic is locked or deleted') {
 						return res.status(400).send({message: e})
 					} else {
@@ -385,6 +388,7 @@ module.exports = function (middleware) {
 				comment = utils.removeProperties(comment, removePropComment);
 				comment.user = utils.removeProperties(comment.user[0], removePropUser)
 				comment.user = utils.replaceProperties(comment.user, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+				comment.user = utils.replaceProperties(comment.user, ['picture'], utils.UPLOAD_PATH_ROOT, utils.REPLACE_UPLOAD_PATH)
 				return comment;
 			})
 
@@ -401,6 +405,13 @@ module.exports = function (middleware) {
 					}
 				]).toArray();
 			total = total[0].total;
+			let pids = comments.map(comment=>comment.pid);
+			let votedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':upvote'));
+			let downvotedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':downvote'));
+			comments.forEach((comment, i)=>{
+				comment.upvotedBy = utils.parseIntArrayString(votedBy[i]);
+				comment.downvotedBy = utils.parseIntArrayString(downvotedBy[i]);
+			})
 			let result = {
 				limit,
 				offset,

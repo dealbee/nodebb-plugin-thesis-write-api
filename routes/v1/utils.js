@@ -6,9 +6,9 @@ const errorHandler = require('../../lib/errorHandler.js'),
 Utils.URL = nconf.get('url');
 Utils.RELATIVE_PATH = nconf.get('relative_path');
 Utils.UPLOAD_PATH_ROOT = `/assets/uploads/`;
-Utils.UPLOAD_PATH = `${Utils.RELATIVE_PATH }${Utils.UPLOAD_PATH_ROOT}`;
+Utils.UPLOAD_PATH = `${Utils.RELATIVE_PATH}${Utils.UPLOAD_PATH_ROOT}`;
 Utils.REPLACE_UPLOAD_PATH = Utils.URL + Utils.UPLOAD_PATH_ROOT;
-Utils.PROPS_REPLACE_USER = ["picture","uploadedpicture","cover:url"]
+Utils.PROPS_REPLACE_USER = ["uploadedpicture", "cover:url"]
 Utils.checkRequired = function (required, req, res) {
 	var missing = [];
 	for (var x = 0, numRequired = required.length; x < numRequired; x++) {
@@ -65,5 +65,9 @@ Utils.checkNumberInt = function (name, a) {
 			}
 		}
 	}
+}
+Utils.parseIntArrayString = function (arr) {
+	arr = arr.map(a => parseInt(a));
+	return arr;
 }
 module.exports = Utils;
