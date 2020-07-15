@@ -271,6 +271,7 @@ module.exports = function (middleware) {
 					let downvotedBy = await db.getSetsMembers([topic.mainPid].map(pid => 'pid:' + pid + ':downvote'));
 					topic.mainPost.upvotedBy = utils.parseIntArrayString(votedBy[0]);
 					topic.mainPost.downvotedBy = utils.parseIntArrayString(downvotedBy[0]);
+					await Topics.increaseViewCount(tid);
 					return res.status(200).send(topic)
 				} catch (e) {
 					if (e == 'Topic is locked or deleted') {
