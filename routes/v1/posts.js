@@ -4,6 +4,7 @@
 var posts = require.main.require('./src/posts'),
 	apiMiddleware = require('./middleware'),
 	errorHandler = require('../../lib/errorHandler'),
+	db = require.main.require('./src/database'),
 	utils = require('./utils');
 
 
@@ -12,8 +13,45 @@ module.exports = function(middleware) {
 
 	app.route('/')
 		.post(apiMiddleware.ignoreUid, /*apiMiddleware.requireUser,*/ async function (req, res) {
-			let result = await posts.create(req.body);
-			res.status(200).send(result)
+			let comments = await posts.create(req.body);
+			try {
+				comments = await db.client.collection('objects')
+					.aggregate([
+						{
+							$addFields: {
+								userKey: {
+									$concat: ['user:', {$toString: '$uid'}]
+								}
+							}
+						},
+						{
+							$lookup: {
+								from: 'objects',
+								localField: 'userKey',
+								foreignField: '_key',
+								as: 'user'
+							}
+						},
+						{
+							$match: {
+								_key: `post:${comments.pid}`
+							}
+						}
+					])
+					.toArray();
+				let removePropComment = ["userKey", "_id"];
+				let removePropUser = ["gdpr_consent", "password", "rss_token", "uploadedpicture", "_id"];
+				comments = comments.map(comment => {
+					comment = utils.removeProperties(comment, removePropComment);
+					comment.user = utils.removeProperties(comment.user[0], removePropUser)
+					comment.user = utils.replaceProperties(comment.user, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					comment.user = utils.replaceProperties(comment.user, ['picture'], utils.UPLOAD_PATH_ROOT, utils.REPLACE_UPLOAD_PATH)
+					return comment;
+				})
+				return res.status(200).send(comments[0])
+			}catch (e) {
+				return res.status(400).send({message:e.toString()})
+			}
 		})
 	// app.route('/:pid')
 	// 	.put(apiMiddleware.requireUser, function(req, res) {

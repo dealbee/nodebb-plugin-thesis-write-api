@@ -246,7 +246,7 @@ module.exports = function (middleware) {
 								$unwind: '$user'
 							},
 							{
-								$match: {_key: `topic:${tid}`, locked: {$ne: 1}}
+								$match: {_key: `topic:${tid}`, locked: {$ne: 1},  deleted: {$ne: 1}}
 							}
 						]).toArray();
 					if (!topic[0]) {
@@ -347,9 +347,7 @@ module.exports = function (middleware) {
 			if (limit > 50) {
 				limit = 50;
 			}
-			if(offset === 0){
 				offset++;
-			}
 			let comments = await db.client.collection('objects')
 				.aggregate([
 					{
@@ -377,10 +375,10 @@ module.exports = function (middleware) {
 						$sort: {timestamp: 1}
 					},
 					{
-						$limit: limit
+						$skip: offset
 					},
 					{
-						$skip: offset
+						$limit: limit
 					}
 				])
 				.toArray();
@@ -417,7 +415,7 @@ module.exports = function (middleware) {
 			let result = {
 				limit,
 				offset,
-				total,
+				total: total --,
 				totalPages : Math.ceil(total / limit),
 				currentPage : Math.floor((offset / limit) + 1),
 				posts: comments,
