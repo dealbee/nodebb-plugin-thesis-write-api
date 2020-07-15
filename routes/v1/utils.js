@@ -1,6 +1,7 @@
 'use strict';
 /* globals module, require */
 const nconf = require.main.require('nconf');
+const privileges = require.main.require('./src/privileges');
 const errorHandler = require('../../lib/errorHandler.js'),
 	Utils = {};
 Utils.URL = nconf.get('url');
@@ -69,5 +70,11 @@ Utils.checkNumberInt = function (name, a) {
 Utils.parseIntArrayString = function (arr) {
 	arr = arr.map(a => parseInt(a));
 	return arr;
+}
+Utils.isAdminOrMod = async function (uid, cid) {
+	let isAdmin = await privileges.users.isAdministrator(uid);
+	let isGlobalMod = await privileges.users.isGlobalModerator(uid);
+	let isMod = await privileges.users.isModerator(uid, cid);
+	return isAdmin || isGlobalMod || isMod;
 }
 module.exports = Utils;

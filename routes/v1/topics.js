@@ -13,7 +13,7 @@ var Topics = require.main.require('./src/topics'),
 module.exports = function (middleware) {
 	var app = require('express').Router();
 	app.route('/')
-		.post(apiMiddleware.requireUser, apiMiddleware.checkOptionalData, async function (req, res) {
+		.post(/*apiMiddleware.requireUser,*/ apiMiddleware.checkOptionalData, async function (req, res) {
 			if (!utils.checkRequired(['cid', 'title', 'content'], req, res)) {
 				return false;
 			}
@@ -23,16 +23,16 @@ module.exports = function (middleware) {
 				title: req.body.title,
 				content: req.body.content,
 				tags: req.body.tags || [],
-				uid: req.user.uid,
+				uid: req.uid || 1,
 				timestamp: req.body.timestamp,
 			};
 
 			Topics.post(payload, async function (err, data) {
-				var topic = await db.client.collection('objects').find({_key: `topic:${data.topicData.tid}`}).toArray();
+				let topic = await db.client.collection('objects').find({_key: `topic:${data.topicData.tid}`}).toArray();
 				topic = topic[0];
 				topic = {...topic, ...req.body.optionalData}
 				data.topicData = {...data.topicData, ...req.body.optionalData}
-				var save = await db.client.collection('objects').save(topic);
+				let save = await db.client.collection('objects').save(topic);
 				return errorHandler.handle(err, res, data);
 			});
 		})
@@ -50,8 +50,8 @@ module.exports = function (middleware) {
 				utils.checkNumberInt('category id', cid)
 				utils.checkNumberInt('limit', limit)
 				utils.checkNumberInt('offset', skip)
-				if (limit){
-					if (limit == '0'){
+				if (limit) {
+					if (limit == '0') {
 						throw "Limit muse be greater than 0"
 					}
 				}
@@ -180,8 +180,8 @@ module.exports = function (middleware) {
 				limit,
 				offset: skip,
 				total,
-				totalPages : Math.ceil(total / limit),
-				currentPage : Math.floor((skip / limit) + 1),
+				totalPages: Math.ceil(total / limit),
+				currentPage: Math.floor((skip / limit) + 1),
 				topics,
 			}
 			res.status(200).send(result);
@@ -246,7 +246,7 @@ module.exports = function (middleware) {
 								$unwind: '$user'
 							},
 							{
-								$match: {_key: `topic:${tid}`, locked: {$ne: 1},  deleted: {$ne: 1}}
+								$match: {_key: `topic:${tid}`, locked: {$ne: 1}, deleted: {$ne: 1}}
 							}
 						]).toArray();
 					if (!topic[0]) {
@@ -256,11 +256,11 @@ module.exports = function (middleware) {
 					topic.categoryName = topic.category[0].name;
 					topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					topic.mainPost = utils.replaceProperties(topic.mainPost, ["content"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
-					let propsToRemove=["gdpr_consent","password","rss_token","uploadedpicture","_id"];
+					let propsToRemove = ["gdpr_consent", "password", "rss_token", "uploadedpicture", "_id"];
 					topic.user = utils.removeProperties(topic.user, propsToRemove);
-					topic.user = utils.replaceProperties(topic.user,utils.PROPS_REPLACE_USER,utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+					topic.user = utils.replaceProperties(topic.user, utils.PROPS_REPLACE_USER, utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
 					topic.mainPost.user = topic.user;
-					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey","userKey","user"])
+					topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey", "userKey", "user"])
 					if (topic.images && topic.images.length > 0) {
 						topic.images = topic.images.map(image => {
 							image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
@@ -326,9 +326,8 @@ module.exports = function (middleware) {
 				utils.checkNumberInt('limit', limit);
 				utils.checkNumberInt('offset', offset);
 				utils.checkNumberInt('tid', tid);
-				if(limit){
-					if(limit === '0')
-					{
+				if (limit) {
+					if (limit === '0') {
 						throw 'Limit must be greater than 0'
 					}
 				}
@@ -348,7 +347,7 @@ module.exports = function (middleware) {
 			if (limit > 50) {
 				limit = 50;
 			}
-				offset++;
+			offset++;
 			let comments = await db.client.collection('objects')
 				.aggregate([
 					{
@@ -406,19 +405,19 @@ module.exports = function (middleware) {
 					}
 				]).toArray();
 			total = total[0].total;
-			let pids = comments.map(comment=>comment.pid);
+			let pids = comments.map(comment => comment.pid);
 			let votedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':upvote'));
 			let downvotedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':downvote'));
-			comments.forEach((comment, i)=>{
+			comments.forEach((comment, i) => {
 				comment.upvotedBy = utils.parseIntArrayString(votedBy[i]);
 				comment.downvotedBy = utils.parseIntArrayString(downvotedBy[i]);
 			})
 			let result = {
 				limit,
 				offset,
-				total: total --,
-				totalPages : Math.ceil(total / limit),
-				currentPage : Math.floor((offset / limit) + 1),
+				total: total--,
+				totalPages: Math.ceil(total / limit),
+				currentPage: Math.floor((offset / limit) + 1),
 				posts: comments,
 			}
 			return res.status(200).send(result)
