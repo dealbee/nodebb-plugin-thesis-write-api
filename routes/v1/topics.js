@@ -43,7 +43,14 @@ module.exports = function (middleware) {
 			let limit = req.query.limit;
 			let skip = req.query.offset;
 
-			let objFind = {_key: /^topic:/, locked: {$ne: 1}};
+			let objFind = {
+				$and:
+					[
+						{_key: /^topic:/},
+						{_key: {$not: {$regex: "tags"}}},
+						{locked: {$ne: 1}}
+					]
+			};
 			let objSorted = {$sort: null};
 
 			try {
