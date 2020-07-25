@@ -128,7 +128,7 @@ module.exports = function (/*middleware*/) {
 					{
 						$addFields: {
 							categoryKey: {
-								$concat: ['category:', {$toString: '$cid'}]
+								$concat: ['category:', {$toLower: '$cid'}]
 							}
 						}
 					},

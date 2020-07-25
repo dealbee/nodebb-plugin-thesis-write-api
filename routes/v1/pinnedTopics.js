@@ -46,7 +46,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							topicKey: {
-								$concat: ['topic:', {$toString: '$tid'}]
+								$concat: ['topic:', {$toLower: '$tid'}]
 							}
 						}
 					},
@@ -64,7 +64,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							categoryKey: {
-								$concat: ['category:', {$toString: '$topic.cid'}]
+								$concat: ['category:', {$toLower: '$topic.cid'}]
 							}
 						}
 					},
@@ -118,7 +118,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							topicKey: {
-								$concat: ['topic:', {$toString: '$tid'}]
+								$concat: ['topic:', {$toLower: '$tid'}]
 							}
 						}
 					},
@@ -136,7 +136,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							categoryKey: {
-								$concat: ['category:', {$toString: '$topic.cid'}]
+								$concat: ['category:', {$toLower: '$topic.cid'}]
 							}
 						}
 					},

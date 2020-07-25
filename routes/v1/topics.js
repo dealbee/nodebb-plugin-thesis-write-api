@@ -135,7 +135,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							categoryKey: {
-								$concat: ['category:', {$toString: '$cid'}]
+								$concat: ['category:', {$toLower: '$cid'}]
 							}
 						}
 					},
@@ -208,10 +208,10 @@ module.exports = function (middleware) {
 							{
 								$addFields: {
 									mainPostKey: {
-										$concat: ['post:', {$toString: '$mainPid'}]
+										$concat: ['post:', {$toLower: '$mainPid'}]
 									},
 									categoryKey: {
-										$concat: ['category:', {$toString: '$cid'}]
+										$concat: ['category:', {$toLower: '$cid'}]
 									}
 								}
 							},
@@ -229,7 +229,7 @@ module.exports = function (middleware) {
 							{
 								$addFields: {
 									userKey: {
-										$concat: ['user:', {$toString: '$uid'}]
+										$concat: ['user:', {$toLower: '$uid'}]
 									}
 								}
 							},
@@ -360,7 +360,7 @@ module.exports = function (middleware) {
 					{
 						$addFields: {
 							userKey: {
-								$concat: ['user:', {$toString: '$uid'}]
+								$concat: ['user:', {$toLower: '$uid'}]
 							}
 						}
 					},

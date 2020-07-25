@@ -20,7 +20,7 @@ module.exports = function(middleware) {
 						{
 							$addFields: {
 								userKey: {
-									$concat: ['user:', {$toString: '$uid'}]
+									$concat: ['user:', {$toLower: '$uid'}]
 								}
 							}
 						},
