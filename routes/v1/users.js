@@ -104,7 +104,7 @@ module.exports = function (/*middleware*/) {
 			} catch (e) {
 				return res.status(400).send({message: e})
 			}
-			let objFind = {_key: /^topic:/, locked: {$ne: 1}, uid: parseInt(uid)};
+			let objFind = {_key: /^topic:/, locked: {$ne: 1}, deleted: {$ne: 1},uid: parseInt(uid)};
 			let objSorted = {$sort: null};
 
 			objSorted.$sort = {timestamp: 1}
@@ -175,7 +175,11 @@ module.exports = function (/*middleware*/) {
 						$count: "total"
 					}
 				]).toArray();
-			total = total[0].total;
+			if (total.length > 0) {
+				total = total[0].total;
+			} else {
+				total = 0;
+			}
 			let result = {
 				limit,
 				offset: skip,

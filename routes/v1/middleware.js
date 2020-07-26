@@ -272,6 +272,7 @@ Middleware.checkOptionalData = function (req, res, next) {
 		maxDiscount = req.body.maxDiscount,
 		minOrder = req.body.minOrder,
 		thumb = req.body.thumb,
+		images = req.body.images,
 		sku = req.body.sku;
 	try {
 		checkNumberInt('amount', amount)
@@ -330,8 +331,11 @@ Middleware.checkOptionalData = function (req, res, next) {
 		expiredTime,
 		maxDiscount: parseFloat(maxDiscount),
 		minOrder: parseInt(minOrder),
-		thumb,
-		sku
+		sku,
+		images
+	}
+	if (thumb) {
+		obj = {...obj, thumb};
 	}
 	req.body.optionalData = obj;
 	next();
@@ -340,7 +344,7 @@ Middleware.checkLoggedIn = function (req, res, next) {
 	console.log(req)
 	let uid = parseInt(req.user.uid);
 	let loggedIn = req.loggedIn;
-	if (uid <=0 || !loggedIn)
+	if (uid <= 0 || !loggedIn)
 		return res.status(400).send('Require logged in user')
 	next();
 }

@@ -163,7 +163,11 @@ module.exports = function (middleware) {
 						$count: "total"
 					}
 				]).toArray();
-			total = total[0].total;
+			if (total.length > 0) {
+				total = total[0].total;
+			} else {
+				total = 0;
+			}
 			let result = {
 				limit,
 				offset: skip,

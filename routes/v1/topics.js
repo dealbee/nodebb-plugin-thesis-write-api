@@ -12,12 +12,119 @@ var Topics = require.main.require('./src/topics'),
 	currency = require('../../lib/currency.json');
 module.exports = function (middleware) {
 	var app = require('express').Router();
+	app.route('/search')
+		.get(async function (req, res) {
+			let text = req.body.text;
+			let limit = req.query.limit;
+			let skip = req.query.offset;
+			let objFind = {
+				$and:
+					[
+						{
+							$text: {
+								$search: `${text}`,
+								$caseSensitive: false
+							}
+						},
+						{_key: /^topic:/},
+						{_key: {$not: /tags/}},
+						{locked: {$ne: 1}},
+						{deleted: {$ne: 1}}
+					]
+			};
+			try {
+				utils.checkNumberInt('limit', limit)
+				utils.checkNumberInt('offset', skip)
+				if (limit) {
+					if (limit === '0') {
+						throw "Limit muse be greater than 0"
+					}
+				}
+			} catch (e) {
+				return res.status(400).send({message: e})
+			}
+			if (limit) {
+				limit = parseInt(limit);
+				if (limit > 50) {
+					limit = 50;
+				}
+			} else {
+				limit = 5;
+			}
+			if (skip) {
+				skip = parseInt(skip);
+			} else {
+				skip = 0;
+			}
+			let topics = await db.client.collection('objects')
+				.aggregate([
+					{
+						$match: objFind
+					},
+					{
+						$addFields: {
+							categoryKey: {
+								$concat: ['category:', {$toLower: '$cid'}]
+							}
+						}
+					},
+					{
+						$lookup: {
+							from: 'objects',
+							localField: 'categoryKey',
+							foreignField: '_key',
+							as: 'category'
+						}
+					},
+					{
+						$skip: skip
+					},
+					{
+						$limit: limit
+					}
+				])
+				.toArray();
+			topics = topics.map(topic => {
+				topic.categoryName = topic.category[0].name;
+				topic = utils.removeProperties(topic, ["category", "categoryKey", "mainPostKey"])
+				topic = utils.replaceProperties(topic, ["thumb"], utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH)
+				if (topic.images && topic.images.length > 0) {
+					topic.images = topic.images.map(image => {
+						image = image.replace(utils.UPLOAD_PATH, utils.REPLACE_UPLOAD_PATH);
+						return image
+					})
+				}
+				return topic;
+			})
+			let total = await db.client.collection('objects')
+				.aggregate([
+					{
+						$match: objFind
+					},
+					{
+						$count: "total"
+					}
+				]).toArray();
+			if (total.length > 0) {
+				total = total[0].total;
+			} else {
+				total = 0;
+			}
+			let result = {
+				limit,
+				offset: skip,
+				total,
+				totalPages: Math.ceil(total / limit),
+				currentPage: Math.floor((skip / limit) + 1),
+				topics,
+			}
+			res.status(200).send(result);
+		})
 	app.route('/')
 		.post(/*apiMiddleware.requireUser,*/ apiMiddleware.checkOptionalData, async function (req, res) {
 			if (!utils.checkRequired(['cid', 'title', 'content'], req, res)) {
 				return false;
 			}
-			console.log('GO')
 			var payload = {
 				cid: req.body.cid,
 				title: req.body.title,
@@ -48,7 +155,8 @@ module.exports = function (middleware) {
 					[
 						{_key: /^topic:/},
 						{_key: {$not: /tags/}},
-						{locked: {$ne: 1}}
+						{locked: {$ne: 1}},
+						{deleted: {$ne: 1}},
 					]
 			};
 			let objSorted = {$sort: null};
@@ -182,7 +290,11 @@ module.exports = function (middleware) {
 						$count: "total"
 					}
 				]).toArray();
-			total = total[0].total;
+			if (total.length > 0) {
+				total = total[0].total;
+			} else {
+				total = 0;
+			}
 			let result = {
 				limit,
 				offset: skip,
@@ -253,7 +365,14 @@ module.exports = function (middleware) {
 								$unwind: '$user'
 							},
 							{
-								$match: {_key: `topic:${tid}`, locked: {$ne: 1}, deleted: {$ne: 1}}
+								$match: {
+									$and: [
+										{_key: `topic:${tid}`},
+										{_key: {$not: /tags/}},
+										{locked: {$ne: 1}},
+										{deleted: {$ne: 1}}
+									]
+								}
 							}
 						]).toArray();
 					if (!topic[0]) {
@@ -411,7 +530,11 @@ module.exports = function (middleware) {
 						$count: "total"
 					}
 				]).toArray();
-			total = total[0].total;
+			if (total.length > 0) {
+				total = total[0].total;
+			} else {
+				total = 0;
+			}
 			let pids = comments.map(comment => comment.pid);
 			let votedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':upvote'));
 			let downvotedBy = await db.getSetsMembers(pids.map(pid => 'pid:' + pid + ':downvote'));
@@ -429,7 +552,6 @@ module.exports = function (middleware) {
 			}
 			return res.status(200).send(result)
 		})
-
 	// app.route('/:tid')
 	// 	.post(apiMiddleware.requireUser, apiMiddleware.validateTid, function (req, res) {
 	// 		if (!utils.checkRequired(['content'], req, res)) {
