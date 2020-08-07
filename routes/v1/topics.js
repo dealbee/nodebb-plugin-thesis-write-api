@@ -14,7 +14,9 @@ module.exports = function (middleware) {
 	var app = require('express').Router();
 	app.route('/search')
 		.get(async function (req, res) {
-			let text = req.body.text;
+			let text = req.query.text;
+			if (text)
+				text = text.replace("%20", / /g)
 			let limit = req.query.limit;
 			let skip = req.query.offset;
 			let objFind = {
