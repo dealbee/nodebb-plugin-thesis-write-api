@@ -201,9 +201,9 @@ module.exports = function (middleware) {
 					objFind.currency = {$regex: currencyReq + '*'}
 				}
 				if (sorted === 'DISCOUNT_MONEY_ASC') {
-					objSorted.$sort = {discountMoney: 1}
+					objSorted.$sort = {discountMoney: 1, tid: 1}
 				} else {
-					objSorted.$sort = {discountMoney: -1}
+					objSorted.$sort = {discountMoney: -1, tid: 1}
 				}
 			} else {
 				objSorted.$sort = {timestamp: 1}
@@ -258,10 +258,10 @@ module.exports = function (middleware) {
 						}
 					},
 					{
-						$match: objFind
+						$sort: objSorted.$sort
 					},
 					{
-						$sort: objSorted.$sort
+						$match: objFind
 					},
 					{
 						$skip: skip
